@@ -2,4 +2,4 @@
 User-agent:*
 Disallow:
 
-Sitemap: https://Cospk.github.io/sitemap.xml
+Sitemap: https://Cospk.github.io/vuepress-app/sitemap.xml
