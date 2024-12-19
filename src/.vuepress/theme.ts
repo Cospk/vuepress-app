@@ -5,13 +5,13 @@ import sidebar from "./sidebar.js";
 
 export default hopeTheme({
   // 当前网站部署到的域名(必填)
-  hostname: "https://CodeStylist181.github.io",
+  hostname: "https://Cospk.github.io",
   // 站点图标 (非，不填则自己找public的favicon.ico图标)
   favicon: "/favicon.svg",
   // 文章显示的默认作者（非）
   author: {
-    name: "sim",
-    url: "https://mister-hope.com",
+    name: "Cospk",
+    url: "https://savvygo.cn",
   },
   // 界面上的图标
   iconAssets: "fontawesome-with-brands",
@@ -22,7 +22,7 @@ export default hopeTheme({
 
   // pure: true,纯净模式去除花哨的东西
   // github的仓库
-  repo: "CodeStylist181",
+  repo: "Cospk",
 
   docsDir: "src",
 
@@ -39,7 +39,7 @@ export default hopeTheme({
   // 加密配置
   encrypt: {
     config: {
-      "/doc/page/encrypt.html": ["1234"],
+      "/page/encrypt.html": ["1234"],
     },
   },
 
@@ -81,6 +81,7 @@ export default hopeTheme({
     ],
     sub: true,
     sup: true,
+
     tabs: true,
     tasklist: true,
     vPre: true,
@@ -93,6 +94,8 @@ export default hopeTheme({
 
     // install mermaid before enabling it
     mermaid: true,
+
+
 
 
     // 取消注释它们如果你需要 TeX 支持
@@ -135,6 +138,7 @@ export default hopeTheme({
 
   // 在这里配置主题提供的插件
   plugins: {
+
     // 注意: 仅用于测试! 你必须自行生成并在生产环境中使用自己的评论服务
     comment: {
       provider: "Giscus",

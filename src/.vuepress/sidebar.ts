@@ -1,35 +1,9 @@
 import { sidebar } from "vuepress-theme-hope";
 
 export default sidebar({
-  // "/": [
-  //   "",
-  //   "portfolio",
-  //   {
-  //     text: "案例",
-  //     icon: "laptop-code",
-  //     prefix: "demo/",
-  //     link: "demo/",
-  //     children: "structure",
-  //   },
-  //   {
-  //     text: "文档",
-  //     icon: "book",
-  //     prefix: "guide/",
-  //     children: "structure",
-  //   },
-  //   {
-  //     text: "幻灯片",
-  //     icon: "person-chalkboard",
-  //     link: "https://ecosystem.vuejs.press/zh/plugins/markdown/revealjs/demo.html",
-  //   },
-  // ],
-  // "/doc/golang": [
-  //   {text: "golang" , icon: "home" , children: "structure"},
-  // ],
-  "/doc/golang": "structure",
-  "/doc/middleware": "structure",
-  "/doc/cloud": "structure",
-  "/doc/computer": "structure",
-  "/doc/middleware/open": "structure",
-  "/doc/share": "structure",
+  // 这里根据文档的结构自行生成，可根据文件夹的readme文档的定义的去编排侧边栏
+  "/golang": "structure",
+  "/middleware": "structure",
+  "/framework": "structure",
+  "/computer": "structure",
 });
