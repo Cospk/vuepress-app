@@ -1,6 +1,6 @@
 ---
 # 这是文章的标题
-title: -Redis
+title: -Redis - Go
 
 
 # 这是侧边栏的顺序
@@ -18,13 +18,11 @@ tag:
 star: true
 ---
 
-待定
-
-# Redis
+# Redis-Go
 
 Redis 是一个开源的使用 ANSI C 语言编写、遵守 BSD 协议、支持网络、可基于内存、分布式、可选持久性的键值对(Key-Value)存储数据库，并提供多种语言的 API，Redis即可以当作一个NoSQL数据库，又可以是当作高速缓存存储，还支持简单的消息队列。
 
-本文仅仅讲解如何使用Go语言驱动来操作Redis数据库，不会对Redis本身做任何讲解。
+本文仅仅讲解如何使用Go语言驱动来操作Redis数据库，不会对[Redis](/midddleware/数据库/)本身做任何讲解。
 
 
 
@@ -34,9 +32,11 @@ Redis 是一个开源的使用 ANSI C 语言编写、遵守 BSD 协议、支持�
 
 
 
+
+
 ## 安装
 
-关于Redis的驱动有很多，本文使用的是`github.com/go-redis/redis`。
+关于Redis的驱动有很多，本文使用的是`github.com/go-redis/redis`（Star：20.3K，相比至下其他都在10k之下）。
 
 <br>
 

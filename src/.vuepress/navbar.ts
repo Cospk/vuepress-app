@@ -64,7 +64,7 @@ export default navbar([
       {
         text: "kafka",
         icon: "/assets/icon/Kafka.png",
-        link: "消息组件/Kafka"
+        link: "消息组件/kafka"
       },
       {
         text: "Nginx",
@@ -145,8 +145,20 @@ export default navbar([
   {
     text: "好物分享",
     icon: "share-nodes",
-    link: "/好物分享",
-    activeMatch: "^/好物分享.html$",
+    prefix: "/share",
+    activeMatch: "^/share/",
+    children: [
+      {
+        text: "好物分享",
+        icon: "share-nodes",
+        link: "好物分享"
+      },
+      {
+        text: "git",
+        icon: "git-alt",
+        link: "git"
+      },
+    ]
   },
   // {
   //   text: "关于作者",
