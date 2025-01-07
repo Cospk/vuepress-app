@@ -288,7 +288,7 @@ http {
 
 **切记：注意修改配置文件一定要：重启nginx服务，访问生效**
 
-```ngix
+```sh
 nginx -s reload
 ```
 

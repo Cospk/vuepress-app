@@ -31,7 +31,7 @@
 
 (1) 使用示例:
 
-```cobol
+```json
 PUT website
 {
     "mappings": {

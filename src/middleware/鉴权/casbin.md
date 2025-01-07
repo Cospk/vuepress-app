@@ -99,7 +99,7 @@ go get github.com/casbin/casbin/v2
 
 + policy.csv：存储了特定的用户权限配置
 
-  ```idl
+  ```sh
   p, demo , /user, write        #demo用户对/user有write权限
   p, demo , /order, read        #demo用户对/order有read权限
   p, demo1 , /user/userlist,read   #demo1用户对/user/userlist有read权限

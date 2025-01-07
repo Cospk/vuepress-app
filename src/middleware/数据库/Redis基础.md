@@ -608,7 +608,7 @@ GEOADD key longitude latitude member [longitude latitude member ...]
 
 示例演示如下：
 
-```
+```sh
 #添加城市地理位置
 127.0.0.1:6379> geoadd city 116.20 39.56 beijing 120.52 30.40 shanghai
 (integer) 2
@@ -636,7 +636,7 @@ GEODIST key member1 member2 [unit]
 
 注意：如果没有指出距离单位，那么默认取值为`m`。示例如下：
 
-```
+```sh
 127.0.0.1:6379> GEODIST city beijing shanghai
 "1091868.8970"
 127.0.0.1:6379> GEODIST city beijing shanghai km
@@ -665,7 +665,7 @@ GEORADIUS key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHH
 
 命令应用示例如下：
 
-```
+```sh
 #添加几个地理位置元素
 127.0.0.1:6379> GEOADD city 106.45 29.56 chongqing 120.33 36.06 qingdao 103.73 36.03 lanzhou
 (integer) 3
@@ -712,7 +712,7 @@ GEORADIUSBYMEMBER key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH]
 
 该命令与 GEORADIUS 命令相似，不过它选择的中心的是具体的位置元素，而非经纬度坐标。示例如下：
 
-```
+```sh
 #以贵阳为中心，最大距离不超过900km
 127.0.0.1:6379> GEORADIUSBYMEMBER city guiyang 900 km WITHCOORD WITHDIST
 1) 1) "guiyang"
@@ -730,7 +730,7 @@ GEORADIUSBYMEMBER key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH]
 
 返回一个或多个位置元素的哈希字符串，该字符串具有唯一 ID 标识，它与给定的位置元素一一对应。示例如下：
 
-```
+```sh
 127.0.0.1:6379> GEOHASH city lanzhou beijing shanghai
 1) "wq3ubrjcun0"
 2) "wx49h1wm8n0"
@@ -741,7 +741,7 @@ GEORADIUSBYMEMBER key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH]
 
 用于删除指定的地理位置元素，示例如下：
 
-```
+```sh
 127.0.0.1:6379> zrem city beijing shanghai
 (integer) 2
 ```
@@ -772,7 +772,7 @@ Redis HyperLogLog 是用来做基数统计的算法，HyperLogLog 的优点是�
 
 以下实例演示了 HyperLogLog 的工作过程：
 
-```
+```sh
 redis 127.0.0.1:6379> PFADD w3ckey "redis" 
 1) (integer) 1 
 redis 127.0.0.1:6379> PFADD w3ckey "mongodb"
@@ -1056,7 +1056,7 @@ dir /www/redis-7.0.8/data
 
 手动触发是通过`SAVAE`命令或者`BGSAVE`命令将内存数据保存到磁盘文件中。如下所示：
 
-```
+```sh
 127.0.0.1:6379> SAVE
 OK
 127.0.0.1:6379> BGSAVE
@@ -1152,7 +1152,7 @@ Redis客户端/go redis/java jedis———发送写命令————–>Redis�
 
 执行如下操作：
 
-```
+```sh
 #修改配置文件，把no改为 yes
 appendonly yes
 #确定存储文件名是否正确
@@ -1166,7 +1166,7 @@ redis-server --service-start
 
 执行如下操作：
 
-```
+```sh
 #修改配置文件：
 vim /etc/redis/redis.conf
 appendonly yes # 把 no 改为 yes
@@ -1194,7 +1194,7 @@ Redis 在长期运行的过程中，aof 文件会越变越长。如果机器宕�
 
 为了让 aof 文件的大小控制在合理的范围内，Redis 提供了 AOF 重写机制，手动执行`BGREWRITEAOF`命令，开始重写 aof 文件，如下所示：
 
-```
+```sh
 127.0.0.1:6379> BGREWRITEAOF
 Background append only file rewriting started
 ```
@@ -1231,7 +1231,7 @@ Background append only file rewriting started
 
 Redis 为自动触发 AOF 重写功能，提供了相应的配置策略。如下所示：修改 Redis 配置文件，让服务器自动执行 BGREWRITEAOF 命令。
 
-```
+```sh
 #默认配置项
 auto-aof-rewrite-percentage 100
 auto-aof-rewrite-min-size 64mb #表示触发AOF重写的最小文件体积,大于或等于64MB自动触发。
@@ -1359,7 +1359,7 @@ Redis 提供了两种实现主从模式的方法，下面进行逐一介绍。�
 
 使用命令在服务端搭建主从模式，其语法格式如下：
 
-```
+```sh
 redis-server --port <slave-port> --slaveof <master-ip> <master-port>
 ```
 
@@ -1482,20 +1482,20 @@ slaveof no one  #使服务器切换为独立主机
 
 新建 redis_6302.conf 文件,并添加以下配置信息：
 
-```
+```sh
 slaveof 127.0.0.1 6379 #指定主机的ip与port
 port 6302 #指定从机的端口
 ```
 
 启动 Redis 服务器，执行以下命令：
 
-```
+```sh
 $ redis-server redis_6302.conf
 ```
 
 客户端连接服务器，并进行简单测试。执行以下命令：
 
-```
+```sh
 $ redis-cli -p 6302
 127.0.0.1:6300> HSET user:username biangcheng
 #写入失败
@@ -1570,7 +1570,7 @@ Redis Sentinel 哨兵模式适合于在 Linux 系统中使用，所以下面的�
 
 接下来，在本地环境使用主从模式搭建一个拥有三台服务器的 Redis 集群节点
 
-```
+```sh
 redis-server redis.conf
 redis-server redis6300.conf
 redis-server redis6301.conf
@@ -1586,7 +1586,7 @@ slaveof 127.0.0.1 6379
 
 #### 2) 单版本配置sentinel哨兵
 
-```
+```sh
 cp sentinel.conf sentinel23679.conf
 ```
 
@@ -1672,7 +1672,7 @@ port 26381
 
 配置文件说明如下：
 
-```
+```sh
 port 26379 #sentinel监听端口，默认是26379，可以更改
 sentinel monitor <master-name> <ip> <redis-port> <quorum>
 ```
@@ -1683,7 +1683,7 @@ sentinel monitor <master-name> <ip> <redis-port> <quorum>
 
 #### 4) 启动sentienl哨兵
 
-```
+```sh
 方式一: 
 redis-sentinel sentinel.conf
 方式二: 
@@ -2218,5 +2218,4 @@ https://github.com/RedisBloom/RedisBloom
 1) (integer) 0
 2) (integer) 1
 ```
-
 

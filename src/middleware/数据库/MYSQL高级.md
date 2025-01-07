@@ -62,7 +62,7 @@ sudo systemctl restart docker
 
 （1）拉取mysql镜像
 
-```properties
+```sh
 docker pull centos/mysql-57-centos7   
 docker pull mysql
 ```
@@ -71,7 +71,7 @@ docker pull mysql
 
 （2）创建容器
 
-```properties
+```sh
 > docker run -di --name=tensquare_mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=mkxiaoer  centos/mysql-57-centos7 
 # 或者
 > docker run -di --name=tensquare_mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=mkxiaoer mysql 
@@ -464,14 +464,14 @@ MySQL中每张表的字段数量是有限制的，具体限制取决于MySQL版�
 
 - **1.1 性能下降的表现**
 
-```properties
+```sh
 执行时间长
 等待时间长
 ```
 
 - **1.2 性能下降的原因**
 
-```properties
+```sh
 查询语句写的不好，各种连接，各种子查询导致用不上索引或者没有建立索引
 建立的索引失效，建立了索引,在真正执行时,没有用上建立的索引
 关联查询太多join
@@ -555,7 +555,7 @@ MySQL中每张表的字段数量是有限制的，具体限制取决于MySQL版�
 
 为了加快数据的查找,可以维护**二叉查找树**,  每个节点分别包含索引键值和一个指向对应数据记录的物理地址的指针,这样就可以运用二叉查找在一定的复杂度内获取相应的数据,从而快速的检索出符合条件 的记录
 
-```
+```sh
 左子树的键值小于根的键值
 右子树的键值大于根的键值
 ```
@@ -581,7 +581,7 @@ MySQL中每张表的字段数量是有限制的，具体限制取决于MySQL版�
 
   
 
-```
+```sh
 为了提升度的长度，还需要对这种数据结构进行优化，所以它的升华版B+Tree诞生了
 ```
 
@@ -630,7 +630,7 @@ MySQL中每张表的字段数量是有限制的，具体限制取决于MySQL版�
 
 **特点**
 
-```properties
+```sh
 非叶子节点不存储data,只存储key,可以增大度
 叶子节点不存储指针
 顺序访问指针，提高区间访问能力
@@ -640,7 +640,7 @@ MySQL中每张表的字段数量是有限制的，具体限制取决于MySQL版�
 
 B+Tree**索引的性能分析**
 
-```
+```sh
 一般使用磁盘I/O次数评价索引结构的优劣
 预读：磁盘一般会顺序向后读取一定长度的数据(页的整数倍)放入内存
 局部性原理：当一个数据被用到时，其附近的数据也通常会马上被使用
@@ -719,7 +719,7 @@ B+树是怎么进行查找的呢，分为单元素查找和范围查找
 
 
 
-```
+```sh
 使用hash结构存储索引，查找单行数据很快，但缺点也很明显。 
 1：无法用于排序 
 2：只支持等值查找 
@@ -758,7 +758,7 @@ MyISAM 索引文件和数据文件是分离的
 
 **优势**
 
-```
+```sh
 1.可以通过建立唯一索引或者主键索引,保证数据库表中每一行数据的唯一性.
 2.建立索引可以大大提高检索的数据,以及减少表的检索行数
 3.在表连接的连接条件 可以加速表与表直接的相连
@@ -768,7 +768,7 @@ MyISAM 索引文件和数据文件是分离的
 
 **劣势**
 
-```
+```sh
 1.在创建索引和维护索引 会耗费时间,随着数据量的增加而增加
 2.索引文件会占用物理空间,除了数据表需要占用物理空间之外,每一个索引还会占用一定的物理空间
 3.当对表的数据进行INSERT,UPDATE,DELETE 的时候,索引也要动态的维护,这样就会降低数据的维护速度,(建立索引会占用磁盘空间的索引文件。一般情况这个问题不太严重，但如果你在一个大表上创建了多种组合索引，索引文件的会膨胀很快)。
@@ -776,7 +776,7 @@ MyISAM 索引文件和数据文件是分离的
 
 **索引的分类**
 
-```
+```sh
 1.普通索引index :加速查找
 2.唯一索引
 	主键索引：primary key ：加速查找+约束（不为空且唯一）
@@ -794,29 +794,29 @@ MyISAM 索引文件和数据文件是分离的
 
 **创建索引**
 
-```
+```sql
 create [UNIQUE|primary|fulltext] index 索引名称 ON 表名(字段(长度))
 ```
 
-```mysql
+```sql
 CREATE INDEX emp_name_index ON employee(NAME);
 ```
 
 **测试脚本**
 
-```
+```sh
 资料中  testemployee.sql文件
 ```
 
 **没有使用索引查询的时间如下**：
 
-```mysql
+```sql
 select cus_id from testemployee where cus_id=5   # 时间: 0.311ms
 ```
 
 **创建索引后查询的时间如下**：
 
-```mysql
+```sql
 -- 为num创建一个索引
 create index idx_cusid on testemployee(cusid)
 -- 再次查询耗时
@@ -825,20 +825,20 @@ select cus_id from testemployee where cus_id=5 # 时间: 0.041ms
 
 **查看索引**
 
-```
+```sql
 show index from 表名
 ```
 
 **删除索引**
 
-```
+```sql
 drop index[索引名称] on 表名
 DROP INDEX emp_name_index ON employee;
 ```
 
 **更改索引**
 
-```mysql
+```sql
 alter table tab_name add primary key(column_list)
 -- 添加一个主键,索引必须是唯一索引,不能为NULL
 alter table tab_name add unque index_name(column_list)
@@ -860,7 +860,7 @@ alter table tab_name add fulltext index_name(column_list)
 
 **适合建立索引**
 
-```
+```sh
 1.主键自动建立唯一索引:primary 
 2.频繁作为查询条件的字段应该创建索引
 比如银行系统银行帐号,电信系统的手机号
@@ -876,7 +876,7 @@ alter table tab_name add fulltext index_name(column_list)
 
 **不适合建立索引**
 
-```
+```sh
 1：记录比较少
 2：经常增删改的表
 3：索引提高了查询的速度，同时却会降低更新表的速度,因为建立索引后, 如果对表进行INSERT,UPDATE DELETE, MYSQL不仅要保存数据,还要保存一下索引文件
@@ -892,7 +892,7 @@ alter table tab_name add fulltext index_name(column_list)
 
 ### **慢查询日志**
 
-```
+```sh
 mysql的慢查询日志是mysql提供的一种日志记录，它用来记录在mysql中响应时间超过阀值的语句,mysql 的日志是跟踪mysql性能瓶颈的最快和最直接的方式了，系统性能出现瓶颈的时候，首先要打开慢查询日志，进行跟踪，尽快的分析和排查出执行效率较慢的SQL ,及时解决避免造成不好的影响。
 
 **作用**： 记录具体执行效率较低的SQL语句的日志信息。
@@ -904,7 +904,7 @@ mysql的慢查询日志是mysql提供的一种日志记录，它用来记录在m
 
 **查看是否开启慢查询日志**
 
-```mysql
+```sql
 show variables like '%slow_query_log%'
 
 开启
@@ -920,14 +920,14 @@ slow_query_log_file=地址
 
 默认情况下是：10s
 
-```mysql
+```sql
 show variables like 'long_query_time'
 set global long_query_time=4;
 ```
 
 **要断开连接后, 才能生效**
 
-```mysql
+```sql
 show global variables like 'long_query_time';
 select sleep(4)
 show global status like '%slow_queries%';
@@ -935,12 +935,12 @@ show global status like '%slow_queries%';
 
 **慢查询日志分析**
 
-```
+```sh
 慢查询日志中可能会出现很多的日志记录，我们可以通过慢查询日志工具进行分析，MySQL默认安装了
 mysqldumpslow工具实现对慢查询日志信息的分析。
 ```
 
-```
+```sh
 -- 得到返回记录集最多的10个SQL。
 mysqldumpslow.pl -s r -t 10 /var/lib/mysql/data/61d50d6107ef-slow.log
 -- 得到访问次数最多的10个SQL
@@ -961,7 +961,7 @@ username[password]@[10.194.172.41]
 
 **参数说明**
 
-```
+```sh
 参数
 -s 按照那种方式排序
 c：访问计数
@@ -987,7 +987,7 @@ n的意思，返回多少条数据。
 
 **概念及作用**
 
-```
+```sh
 使用explain关键字,可以模拟优化器执行的SQL语句
 从而知道MYSQL是如何处理sql语句的
 通过Explain可以分析查询语句或表结构的性能瓶颈
@@ -1004,7 +1004,7 @@ n的意思，返回多少条数据。
 
 **使用方法**
 
-```mysql
+```sql
 使用Explain关键字 放到sql语句前
 
 explain select cus_id from testemployee where cus_id > 10
@@ -1020,7 +1020,7 @@ explain select cus_id from testemployee where cus_id > 10
 
 **id**​	 （重要）
 
-```
+```sh
  select查询的序列号，包含一组数字,表示查询中执行select子句或操作表的顺序	
  值分为三种情况
 
@@ -1035,7 +1035,7 @@ explain select cus_id from testemployee where cus_id > 10
 	在所有组中,id值越大,优先级越高,越先执行	
 ```
 
-```mysql
+```sql
 -- id值相同
 EXPLAIN SELECT * from employee e,department d,customer c where e.dep_id = d.id and e.cus_id = c.id;
 
@@ -1043,14 +1043,14 @@ EXPLAIN SELECT * from employee e,department d,customer c where e.dep_id = d.id a
 
 
 
-```mysql
+```sql
 -- id值不同	
 EXPLAIN SELECT * from department WHERE id = (SELECT id from employee WHERE id=(SELECT id from customer WHERE id = 1))
 ```
 
 
 
-```mysql
+```sql
 -- id值相同 不同都存在 deriverd 衍生出来的虚表
 EXPLAIN select * from department d, (select * from employee group by dep_id) t where d.id = t.dep_id;
 ```
@@ -1059,25 +1059,27 @@ EXPLAIN select * from department d, (select * from employee group by dep_id) t w
 
 **select_type** 		
 
-	查询类型,主要用于区别普通查询,联合查询,子查询等复杂查询
-	结果值
-	SIMPLE
-		简单select查询,查询中不包含子查询或者UNION
-	PRIMARY
-		查询中若包含任何复杂的子查询,最外层查询则被标记为primary
-	SUBQUERY
-		在select或where中包含了子查询
-	DERIVED
-		在from列表中包含的子查询被标记为derived(衍生)把结果放在临时表当中		
-	
-	UNION
-		若第二个select出现的union之后,则被标记为union
-		若union包含在from子句的子查询中,外层select将被标记为deriver
-	UNION RESULT
-		从union表获取结果select,两个UNION合并的结果集在最后
+```sh
+查询类型,主要用于区别普通查询,联合查询,子查询等复杂查询
+结果值
+SIMPLE
+	简单select查询,查询中不包含子查询或者UNION
+PRIMARY
+	查询中若包含任何复杂的子查询,最外层查询则被标记为primary
+SUBQUERY
+	在select或where中包含了子查询
+DERIVED
+	在from列表中包含的子查询被标记为derived(衍生)把结果放在临时表当中		
+
+UNION
+	若第二个select出现的union之后,则被标记为union
+	若union包含在from子句的子查询中,外层select将被标记为deriver
+UNION RESULT
+	从union表获取结果select,两个UNION合并的结果集在最后
+```
 
 
-```mysql
+```sql
 -- union 和 union result 示例
 EXPLAIN select * from employee e LEFT JOIN department d on e.dep_id = d.id
 UNION 
@@ -1088,73 +1090,73 @@ select * from employee e RIGHT JOIN department D ON e.dep_id = d.id
 
 **table**
 
-```
+```sh
 显示这一行的数据是关于哪张表的
 ```
 
 **partitions **
 
-```\
+```sh
 如果查询是基于分区表的话, 会显示查询访问的分区
 ```
 
 **type**     (重要)
 
-```
+```sh
 访问类型排列	
 结果值:(最好到最差) system > const > eq_ref >  ref > range > index > ALL
 ```
 
-```mysql
+```sql
 -- system 表中有一行记录(系统表)  这是const类型的特例,平时不会出现
 explain select HOST from mysql.db where HOST='localhost'
 ```
 
 
 
-```mysql
+```sql
 -- const  表示通过索引一次就找到了，const用于比较primary 或者 unique索引.   直接查询主键或者唯一索引，因为只匹配一行数据,所以很快
 EXPLAIN select id from testemployee where id=1000
 ```
 
 
 
-```mysql
+```sql
 -- eq_ref 唯一性索引扫描 对于每个索引键,表中只有一条记录与之匹配, 常见于主键或唯一索引扫描
 EXPLAIN select * from employee e,department d where e.id=d.id
 ```
 
 
 
-```mysql
+```sql
 -- ref 非唯一性索引扫描,返回匹配某个单独值的所有行,本质上也是一种索引访问,它返回所有匹配某个单独值的行可能会找到多个符合条件的行,所以它应该属于查找和扫描的混合体
 EXPLAIN select e.id,e.dep_id,d.id from employee e,department d where e.dep_id = d.id
 ```
 
 
 
-```mysql
+```sql
 -- range 只检索给定范围的行,使用一个索引来选择行 一般就是在你的where语句中出现between\<\>\ in等查询,这种范围扫描索引比全表扫描要好,因为它只需要开始于索引的某一点.而结束语另一点,不用扫描全部索引
 explain select * from employee where id>2
 ```
 
 
 
-```mysql
+```sql
 -- index index与All区别为index类型只遍历索引树,通常比All要快,因为索引文件通常比数据文件要小all和index都是读全表,但index是从索引中读取,all是从硬盘当中读取
 explain select id from employee
 ```
 
 
 
-```mysql
+```sql
 -- ALL 将全表进行扫描,从硬盘当中读取数据,如果出现了All 切数据量非常大, 一定要去做优化
 explain select * from employee
 ```
 
 
 
-```
+```sh
 要求:
 	一般来说,保证查询至少达到range级别
 	最好能达到ref
@@ -1162,20 +1164,20 @@ explain select * from employee
 
 **possible_keys**
 
-```
+```sh
 显示可能应用在这张表中的索引,一个或者多个
 查询涉及到的字段上若存在索引,则该索引将被列出,但不一定被查询实际使用
 可能自己创建了4个索引,在执行的时候,可能根据内部的自动判断,只使用了3个
 ```
 
-```mysql
+```sql
 --  可能不会用到索引，实际用到索引
 explain select dep_id from employee
 ```
 
 
 
-```mysql
+```sql
 -- 可能会使用索引，实际没用到索引
 EXPLAIN select * from employee e,department d where e.dep_id = d.id
 ```
@@ -1186,7 +1188,7 @@ EXPLAIN select * from employee e,department d where e.dep_id = d.id
 
 **key** （重要）
 
-```
+```sh
 实际使用的索引,如果为NULL,则没有使用索引,查询中若使用了覆盖索引 ,则该索引仅出现在key列表
 
 possible_keys与key关系,理论应该用到哪些索引  实际用到了哪些索引
@@ -1195,7 +1197,7 @@ possible_keys与key关系,理论应该用到哪些索引  实际用到了哪些�
 
 **key_len**
 
-```mysql
+```sql
 -- 表示索引中使用的字节数,可通过该列计算查询中使用的索引长度 .
 explain select * from employee where dep_id=1 and name='鲁班' and age=10
 ```
@@ -1204,17 +1206,17 @@ explain select * from employee where dep_id=1 and name='鲁班' and age=10
 
 **ref**
 
-```
+```sh
 索引是否被引入到, 到底引用到了哪几个索引
 ```
 
-```mysql
+```sql
 Explain select * from employee e,department d where e.dep_id = d.id and e.cus_id = 1
 ```
 
 
 
-```mysql
+```sql
 Explain select e.dep_id from employee e,department d,customer c where e.dep_id = d.id and e.cus_id = c.id and e.name='鲁班'
 ```
 
@@ -1222,26 +1224,26 @@ Explain select e.dep_id from employee e,department d,customer c where e.dep_id =
 
 **rows**
 
-```
+```sh
 根据表统计信息及索引选用情况,大致估算出找到所需的记录所需要读取的行数,每张表有多少行被优化器查询过
 ```
 
 **filtered**
 
-```mysql
+```sql
 -- 满足查询的记录数量的比例，注意是百分比，不是具体记录数 . 值越大越好，filtered列的值依赖统计信息，并不十分准确
 Explain select e.dep_id from employee e,department d where e.dep_id = d.id
 ```
 
 **Extra**  （重要）
 
-```
+```sh
 注意：语句中出现了Using Filesort 和 Using Temporary说明没有使用到索引
 ```
 
 **产生的值:**
 
-```mysql
+```sql
 	/* 
 	Using filesort (需要优化)
 		说明mysql会对数据使用一个外部的索引排序,
@@ -1253,7 +1255,7 @@ Explain select e.dep_id from employee e,department d where e.dep_id = d.id
 
 
 
-```mysql
+```sql
 	/* 
 	Using temporary (需要优化)
 		使用了临时表保存中间结果,Mysql在对查询结果排序时, 使用了临时表,
@@ -1264,7 +1266,7 @@ Explain select e.dep_id from employee e,department d where e.dep_id = d.id
 
 
 
-```mysql
+```sql
 	/*
 	impossible where (需要优化)
 		where 子句的值总是false 不能用来获取任何元组
@@ -1274,15 +1276,17 @@ Explain select e.dep_id from employee e,department d where e.dep_id = d.id
 
 
 
-		use index
-			表示相应的select中使用了覆盖索引,避免访问了表的数据行, 效率很好
-			如果同时出现using where  表明索引被用来执行索引键值的查找
-			如果没有同时出现using where 表明索引 用来读取数据而非执行查找动作
-			示例
-		using where
-			表明使用了where过滤
-		using join buffer
-			使用了连接缓存
+```sh
+	use index
+		表示相应的select中使用了覆盖索引,避免访问了表的数据行, 效率很好
+		如果同时出现using where  表明索引被用来执行索引键值的查找
+		如果没有同时出现using where 表明索引 用来读取数据而非执行查找动作
+		示例
+	using where
+		表明使用了where过滤
+	using join buffer
+		使用了连接缓存
+```
 
 
 
@@ -1374,7 +1378,7 @@ CREATE TABLE `house_detail` (
 
 - 全值匹配
 
-```mysql
+```sql
 -- 创建组合索引
 create index idx_name_dep_age on employee(name,dep_id,age)
 -- 索引字段全部使用上
@@ -1383,68 +1387,68 @@ explain select * from employee where name='鲁班' and dep_id=1 and age=10
 
 - 最左匹配原则
 
-```mysql
+```sql
 -- 去掉name条件 索引全部失效
 explain select * from employee where dep_id=1 and age=10
 ```
 
-```mysql
+```sql
 -- 去掉dep_id   name索引生效
 explain select * from employee where name='鲁班' and age=10
 ```
 
-```mysql
+```sql
 -- 顺序错乱不会影响最左匹配
 explain select * from employee where dep_id=1 and  age=10 and name='鲁班' 
 ```
 
 - 不再索引列上做任何操作
 
-```mysql
+```sql
 -- 在name字段上 加上去除空格的函数 索引失效
 explain select * from employee where TRIM(name)='鲁班' and dep_id=1 and age=10
 ```
 
 - 范围条件右边的索引失效
 
-```mysql
+```sql
 -- 范围查找 会造成该组合索引字段的右侧索引全部失效
 explain select * from employee where  name = '鲁班' and dep_id>1 and age=10 
 ```
 
 - mysql在使用不等于(!=或者<>)索引失效
 
-```mysql
+```sql
 explain select * from employee where age != 10
 ```
 
 - is null,is not null无法使用索引
 
-```mysql
+```sql
 explain select * from employee where name is not NULL
 ```
 
 - like以通配符开头(%qw)索引失效
 
-```mysql
+```sql
 explain select * from employee where name like '%鲁'
 ```
 
 - 字符串不加引号索引失效
 
-```mysql
+```sql
 explain select * from employee where name = 200
 ```
 
 - 使用or连接索引失效
 
-```mysql
+```sql
 explain select * from employee where name = '鲁班' or age>10
 ```
 
 - 尽量使用覆盖索引
 
-```mysql
+```sql
 -- 覆盖索引: 要查询的字段全部是索引字段
 -- 上面情况会触发全表扫描，不过若使用了覆盖索引，则会只扫描索引文件
 explain select name,dep_id,age from employee where name = '鲁班' or age>10
@@ -1458,7 +1462,7 @@ explain select name,dep_id,age from employee where name = '鲁班' or age>10
 
 **使用order by出现Using filesort**
 
-```mysql
+```sql
 -- 没有使用索引排序，而是内部创建新文件进行文件排序，所以需要优化
 -- 如果select语句未使用到索引，会出现 filesort
 explain select * from employee  order by name,dep_id,age
@@ -1477,7 +1481,7 @@ explain select * from employee where name='鲁班' order by dep_id desc,age
 
 **使用group by出现Using temporary**
 
-```
+```sh
 -- 同order by情况类似， 分组必定触发排序
 ```
 
@@ -1487,12 +1491,12 @@ explain select * from employee where name='鲁班' order by dep_id desc,age
 
 ### MySQL优化实战之大数据量分页优化
 
-```
+```sh
 -- 分页是我们经常使用的功能，在数据量少时单纯的使用limit m,n 不会感觉到性能的影响
 -- 但我们的数据达到成百上千万时 ， 就会明显查询速度越来越低
 ```
 
-```mysql
+```sql
 -- 使用存储过程导入数据
 
 -- 查看是否开启函数功能
@@ -1535,7 +1539,7 @@ call insert_emp(1,1000000);
 
 ```
 
-```mysql
+```sql
 -- 测试一下分页数据的相应时间
 
 -- limit 0,20 时间: 0.001ms
@@ -1552,7 +1556,7 @@ select * from testemployee limit 3000000,20
 
 **子查询优化**
 
-```mysql
+```sql
 -- 子查询优化
 -- 通过Explain发现，之前我们没有利用到索引，这次我们利用索引查询出对应的所有ID
 -- 在通过关联查询，查询出对应的全部数据，性能有了明显提升
@@ -1565,7 +1569,7 @@ select * from testemployee where id> (select id from testemployee t limit 300000
 
 **使用id限定方案**
 
-```mysql
+```sql
 -- 使用id限定方案，将上一页的ID传递过来 根据id范围进行分页查询
 -- 通过程序的设计，持续保留上一页的ID，并且ID保证自增
 -- 时间: 0.010ms   
@@ -1580,18 +1584,18 @@ select * from testemployee where id>3000109 limit 20
 
 **3.2.4.1 表关联查询**
 
-```mysql
+```sql
 MySQL 表关联的算法是 Nest Loop Join，是通过驱动表的结果集作为循环基础数据，然后一条一条地通过该结果集中的数据作为过滤条件到下一个表中查询数据，然后合并结果。如果小的循环在外层，对于数据库连接来说就只连接5次，进行5000次操作，如果1000在外，则需要进行1000次数据库连接，从而浪费资源，增加消耗。这就是为什么要小表驱动大表。
 ```
 
-```
+```sh
 总结：
 多表查询中，一定要让小表驱动大表
 ```
 
 **3.2.4.2  in和exits查询**
 
-```mysql
+```sql
 -- 使用in 时间: 3.292ms
 explain select * from testemployee where dep_id in (select id from department)
 
@@ -1601,7 +1605,7 @@ for( select id from department d)
 	for( select * from employee e where e.dep_id=d.id)
 ```
 
-```mysql
+```sql
 -- 使用exits 时间: 14.771ms
 select * from employee e where exists (select 1 from department d where d.id = e.dep_id)
 使用employee表中数据作为外层循环 3000000万次
@@ -1611,7 +1615,7 @@ for(select * from employee e)
 
 ```
 
-```
+```sh
 总结：
 	当A表数据多于B表中的数据时，这是我们使用in优于Exists
 	当B表数据多于A表中的数据时,这时我们使用Exists优于in
@@ -1621,7 +1625,7 @@ for(select * from employee e)
 
 **3.2.5 max函数优化**
 
-```mysql
+```sql
 -- 给max函数中的字段添加索引
 select max(age) from testemployee
 ```
@@ -1646,7 +1650,7 @@ select max(age) from testemployee
 
 1：首先拉取mysql5.7的镜像
 
-```properties
+```sh
 docker pull mysql:5.7
 ```
 
@@ -1654,13 +1658,13 @@ docker pull mysql:5.7
 
 **Master(主)：**
 
-```properties
+```sh
 docker run -p 3306:3306 --name mymysql-master -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.7
 ```
 
 **Slave(从)：**
 
-```properties
+```sh
 docker run -p 3307:3306 --name mymysql-slave-01 -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.7
 docker run -p 3308:3306 --name mymysql-slave-02 -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.7
 ```
@@ -1669,7 +1673,7 @@ docker run -p 3308:3306 --name mymysql-slave-02 -e MYSQL_ROOT_PASSWORD=123456 -d
 
 使用`docker ps`命令查看正在运行的容器：
 
-![mark](assets/5L4Adf7clg.png) 
+
 
  此时可以使用Navicat等工具测试连接mysql 
 
@@ -1745,7 +1749,7 @@ slave_skip_errors=1062
 
 将两个文件分别拷贝到各自的容器下即可(当然你也可以使用`卷` volume的方式也可以)
 
-```properties
+```sh
 docker cp /opt/mysql/mysqlmaster.cnf  mymysql-master:/etc/mysql/conf.d
 docker cp /opt/mysql/mysqlslave01.cnf mymysql-slave-01:/etc/mysql/conf.d
 docker cp /opt/mysql/mysqlslave02.cnf mymysql-slave-02:/etc/mysql/conf.d
@@ -1787,7 +1791,7 @@ change master to master_host='172.17.0.2', master_user='root', master_password='
 
 7：查看主从同步状态
 
-```properties
+```sh
 ## 查看同步状态
 > show slave status\G;
 ## 开启主从同步
