@@ -152,7 +152,7 @@ B服务处理消息能力是100qps、但是A服务可发送200pqs，这么多的
 
 
 
-![kafka_simperSave](C:/Users/xiaoXie/Downloads/kafka_simperSave.jpeg)
+
 
 
 
