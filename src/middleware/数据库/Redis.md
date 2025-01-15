@@ -117,13 +117,13 @@ Ok
 
 1. 安装编译环境gcc （Redis是C编写的，需要C的环境）
 
-   ```shell
+   ```sh
    yum install gcc-c++
    ```
 
 2. 下载，解压，编译（redis下载地址为：https://redis.io/download/）
 
-   ```shell
+   ```sh
    $ wget https://github.com/redis/redis/archive/7.0.8.tar.gz
    $ tar xzf 7.0.8.tar.gz
    $ cd redis-7.0.8
@@ -132,13 +132,13 @@ Ok
 
 3. 二进制文件是编译完成后在`src`目录下. 运行如下
 
-   ```shell
+   ```sh
    $ src/redis-server
    ```
 
 4. 使用客户端连接服务
 
-   ```shell
+   ```sh
    # 本地连接
    $ src/redis-cli
    redis> 
@@ -694,7 +694,7 @@ Redis 在长期运行的过程中，aof 文件会越变越长。如果机器宕�
 
 为了让 aof 文件的大小控制在合理的范围内，Redis 提供了 AOF 重写机制，手动执行`BGREWRITEAOF`命令，开始重写 aof 文件，如下所示：
 
-```
+```sh
 127.0.0.1:6379> BGREWRITEAOF
 Background append only file rewriting started
 ```
