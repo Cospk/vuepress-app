@@ -2,7 +2,7 @@
 
 语法：
 
-````markmap
+```markmap
 ---
 markmap:
   colorFreezeLevel: 2
@@ -29,7 +29,7 @@ markmap:
 - Katex
   - $x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
 - 现在我们可以通过 `maxWidth` 选项自动换行非常非常非常非常非常非常非常非常非常非常长的内容
-````
+```
 
 
 
