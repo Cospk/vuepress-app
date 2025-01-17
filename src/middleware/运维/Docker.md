@@ -68,7 +68,7 @@ star: true
 
 **Docker的架构图**
 
-![image-20200116185657945](E:\KuangStudy\直播\云原生\20231207：Docker基础-1\Docker基础.assets\image-20200116185657945.png)
+![image-20200116185657945](https://gavvy-cloud.oss-cn-shenzhen.aliyuncs.com/web/docker_farmework.png)
 
 
 
@@ -200,7 +200,7 @@ sudo rm -rf /var/lib/containerd
 
 
 
-![image-20231207211042009](E:\KuangStudy\直播\云原生\20231207：Docker基础-1\Docker基础.assets\image-20231207211042009.png)
+
 
 
 
