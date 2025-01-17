@@ -1,6 +1,6 @@
 ---
 # 这是文章的标题
-title: -Nginx
+title: Nginx
 
 
 # 这是侧边栏的顺序

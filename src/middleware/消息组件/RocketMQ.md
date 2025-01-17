@@ -1,6 +1,6 @@
 ---
 # 这是文章的标题
-title: -RocketMQ
+title: RocketMQ
 
 
 # 这是侧边栏的顺序
