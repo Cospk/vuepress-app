@@ -1,6 +1,6 @@
 ---
 # 这是文章的标题
-title: kubernetes问题排查
+title: kubernetes-op
 
 
 # 这是侧边栏的顺序
@@ -22,13 +22,15 @@ star: true
 
 K8S工程师必备问题排查手册
 
+
+
 ## 1、Pod 相关问题及排查:
 
 1.Pod 无法启动，如何查找原因?
 
 - 使用 kubectl  describe pod [pod_name] -n  [namespace_name] 命令查看该Pod 的状态信息，检査容器的状态和事件信息，判断是否出现问题。
 - 使用 kubectl  logs  [pod_name]  -n  [namespace_name]命令查看该 Pod 容器的日志信息，判断是否有错误或异常信息。
-- 使用kubectl get events --field-selector involvedobject.name=[pod_name)-n[namespace_name〕命令查看该 Pod相关的事件信息，判断是否有异常事件发生。
+- 使用kubectl get events --field-selector involvedobject.name=[pod_name]-n [namespace_name]命令查看该 Pod相关的事件信息，判断是否有异常事件发生。
 
 2.Pod 无法连接到其他服务，如何排查?
 
@@ -50,8 +52,8 @@ K8S工程师必备问题排查手册
 
 5.Pod 状态一直是 Pending，怎么办?
 
-- 查石该Pod的事件信息:kubectldescribepod<pod-name>
-- 查看该节点资源利用率是否过高:kubectltop node
+- 查石该Pod的事件信息:kubectl  describe  pod < pod-name >
+- 查看该节点资源利用率是否过高:kubectl  top node
 - 如果是调度问题，可以通过以下方式解决:
   -  确保有足够的节点资源满足该 Pod 调度需求
   - 检查该节点的talnts和toleratlons 是否与Pod 的 selector 匹配。
@@ -67,18 +69,18 @@ K8S工程师必备问题排查手册
 
 7.Pod 启动后立即退出，怎么办?
 
-- 查看该Pod的率件信息:kubect1describe pod<pod-name>
-- 查看该Pod的日志:kubect11ogs<pod-name>
+- 查看该Pod的率件信息:kubectl  describe pod  < pod-name >
+- 查看该Pod的日志:kubectl  logs  < pod-name >
 - 检查容器是否正确，环境变量是否正常，入口脚本是否正确
-- 尝试在本地使用相同的镜像运行该容器，查看是否有报错信息，如执行dockerrun<image-name>
+- 尝试在本地使用相同的镜像运行该容器，查看是否有报错信息，如执行docker  run  < image-name >
 
 8.Pod 启动后无法正确运行应用程序，怎么办?
 
-- 查看 Pod中的应用程序日志:kubect11ogs<pod-name>
-- 查看该Pod的事件信息:kubectldescribe pod<pod-name>
+- 查看 Pod中的应用程序日志:kubectl  logs< pod-name >
+- 查看该Pod的事件信息:kubectl  describe  pod< pod-name >
 - 检查应用程序的配置文件是否正确
 - 检查应用程序的依赖是否正常
-- 尝试在本地使用相同的搅像运行该容器，查看是否有报错信息，如执行dockerrun<image-name>
+- 尝试在本地使用相同的搅像运行该容器，查看是否有报错信息，如执行docker  run  < image-name >
 - 确认该应用程序是否与 Pod 的资源限制相符
 
 9.Kubernetes 集群中的 Service 不可访问，怎么办?
@@ -97,7 +99,7 @@ K8S工程师必备问题排查手册
 1.Node 状态异常，如何排查?
 
 - 使用 kubectl get nodes 命令查看集群中所有节点的状态和信息，判断是否存在故障,
-- 使用 kubectl describe node[node-name]命令查看目标节点的详细信息，包括CPU、内存、磁盘等硬件资源的使用情况，判断是否存在性能瓶颈,。使用 kubectl get podso wide“-a11-namespaces 命令查看集群中所有Pod的状态信息，判断是否自 Pod 远行在目标节点上导致资源紧张,
+- 使用 kubectl describe node  [node-name]命令查看目标节点的详细信息，包括CPU、内存、磁盘等硬件资源的使用情况，判断是否存在性能瓶颈,。使用 kubectl get podso wide“-a11-namespaces 命令查看集群中所有Pod的状态信息，判断是否自 Pod 远行在目标节点上导致资源紧张,
 
 2.Node 上运行的 Pod 无法访问网络，如何排査?
 
@@ -107,12 +109,13 @@ K8S工程师必备问题排查手册
 
 3.Node 上的 Pod 无法访问存储，如何排卉?
 
-- 使用 kubectl describe pod[pod_name]-n[namespace_name〕命令检查Pod的 volumes 配置信息，判断是否存在存储挂载失败的情况。*使用 kubect1 exec -it [pod_name] -n [namespace_name]-- /bin/bash 命令进入Pod 所在的容器，尝试使用 1s 和 cat 等命令访问挂载的文件系统，判断是否存在读写错误。
-- 使用 kubectl describe persistentvolumeclaim [pvc_name]-n[namespace_name]命令查看相关PVC配置和状态信息，判断是否存在故障。
+- 使用 kubectl describe pod  [pod_name]  -n  [namespace_name〕命令检查Pod的 volumes 配置信息，判断是否存在存储挂载失败的情况。
+- 使用 kubect1 exec -it [pod_name] -n [namespace_name]  -- /bin/bash 命令进入Pod 所在的容器，尝试使用 1s 和 cat 等命令访问挂载的文件系统，判断是否存在读写错误。
+- 使用 kubectl describe persistentvolumeclaim [pvc_name] -n [namespace_name]命令查看相关PVC配置和状态信息，判断是否存在故障。
 
 4.存储卷挂载失败，如何处理?
 
-- 使用 kubectl describe pod[pod_name]-n[namespace_name]命令检查 Pod的 volumes 配置信息，判断是否存在存储卷定义错误,
+- 使用 kubectl describe pod   [pod_name]  -n  [namespace_name]命令检查 Pod的 volumes 配置信息，判断是否存在存储卷定义错误,
 - 使用 kubectl describe persistentvolumeclaim [pvc_name]-n [namespace_name]命令检音 PVC的状态和信思，判断是否存在存储配颜不足或存储资源故障等原因。
 - 如果是 NFS 或Ceph 等网络存储，需要确认网络连接是否正常，以及存储服务器的服务是否正常。
 
