@@ -245,3 +245,12 @@ func main() {
  	transation.Commit()
 }
 ```
+
+
+
+
+
+---
+
+一般项目中操作MySQL不会使用原生的，而是使用orm，如GORM框架操作MySQL --->[GORM操作MySQL]()
+
