@@ -97,12 +97,12 @@ K8S工程师必备问题排查手册
 1.Node 状态异常，如何排查?
 
 - 使用 kubectl get nodes 命令查看集群中所有节点的状态和信息，判断是否存在故障,
-- 使用 kubect1 describe node[node-name]命令查看目标节点的详细信息，包括CPU、内存、磁盘等硬件资源的使用情况，判断是否存在性能瓶颈,。使用 kubectl get podso wide“-a11-namespaces 命令查看集群中所有Pod的状态信息，判断是否自 Pod 远行在目标节点上导致资源紧张,
+- 使用 kubectl describe node[node-name]命令查看目标节点的详细信息，包括CPU、内存、磁盘等硬件资源的使用情况，判断是否存在性能瓶颈,。使用 kubectl get podso wide“-a11-namespaces 命令查看集群中所有Pod的状态信息，判断是否自 Pod 远行在目标节点上导致资源紧张,
 
 2.Node 上运行的 Pod 无法访问网络，如何排査?
 
 - 使用 kubect1 describe node[node_name]命令查看目标节点的信息，检査节点是否正常连接到网络.
-- 使用 kubectl describe pod【pod_name]-n[namespace_name]命令查看 Pod 所远行的节点信息，判断是否因为节点状态异常导致网络访问失败。
+- 使用 kubectl describe pod [pod_name]  -n  [namespace_name]命令查看 Pod 所远行的节点信息，判断是否因为节点状态异常导致网络访问失败。
 - 使用 kubect11ogs[pod_name]-n[namespace_name]命令青看 Pod 容器的日志信息，寻找可能的错误或界常信息。
 
 3.Node 上的 Pod 无法访问存储，如何排卉?
