@@ -1,34 +1,61 @@
 ---
 home: true
 icon: home
-title: 项目主页
-heroImage: https://theme-hope-assets.vuejs.press/logo.svg
+title: Go网址导航
+heroImage: https://golang.org/lib/godoc/images/go-logo-blue.svg
 bgImage: https://theme-hope-assets.vuejs.press/bg/6-light.svg
 bgImageDark: https://theme-hope-assets.vuejs.press/bg/6-dark.svg
 bgImageStyle:
   background-attachment: fixed
-heroText: 项目名称
-tagline: 你可以在这里放置或是整个项目的描述。
+heroText: Go网址导航
+tagline: 收集整理Go语言相关的优质资源，助力Go开发者快速找到所需工具和资料
 actions:
-  - text: 使用指南
-    icon: lightbulb
-    link: ./demo/
+  - text: 开始探索
+    icon: rocket
+    link: ./golang/
     type: primary
-
-  - text: 文档
-    link: ./guide/
+  - text: 学习资源
+    icon: book
+    link: ./docs/
 
 highlights:
-  - header: 易于安装
+  - header: 热门推荐
     image: /assets/image/box.svg
     bgImage: https://theme-hope-assets.vuejs.press/bg/3-light.svg
     bgImageDark: https://theme-hope-assets.vuejs.press/bg/3-dark.svg
     highlights:
-      - title: 运行 <code>pnpm create vuepress-theme-hope hope-project</code> 以创建一个新的主题项目。
-      - title: 在已有项目根目录下运行 <code>pnpm create vuepress-theme-hope add .</code> 以在项目中添加主题。
+      - title: Go语言中文网
+        icon: globe
+        details: 推荐! Go语言学习的不二之选,国内最大的Go语言社区
+        link: https://studygolang.com
 
-  - header: 在 Markdown 中添加你想要的内容
-    description: 我们扩展了标准的 CommonMark 规范，为你添加了成吨功能。
+      - title: Go官网镜像
+        icon: download
+        details: Go语言官方网站国内完整镜像
+        link: https://golang.google.cn
+
+      - title: Go.Dev
+        icon: search
+        details: Go用户的枢纽,可为整个Go生态系统提供集中和精选的资源
+        link: https://go.dev
+
+      - title: Go招聘
+        icon: briefcase
+        details: Go招聘,发布国内Go招聘相关职位,以及求职等信息
+        link: https://golangjob.xyz
+
+      - title: Go夜读
+        icon: moon
+        details: 推进大家深入了解Go,快速成长为资深的Gopher
+        link: https://talkgo.org
+
+      - title: Goproxy中国
+        icon: rocket
+        details: 中国最可靠的Go模块代理
+        link: https://goproxy.cn
+
+  - header: 社区论坛
+    description: 活跃的Go语言社区，交流学习的好去处
     image: /assets/image/markdown.svg
     bgImage: https://theme-hope-assets.vuejs.press/bg/2-light.svg
     bgImageDark: https://theme-hope-assets.vuejs.press/bg/2-dark.svg
@@ -36,291 +63,190 @@ highlights:
       background-repeat: repeat
       background-size: initial
     features:
-      - title: 链接检查
-        icon: clipboard-check
-        details: 检查 Markdown 链接
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/others.html#link-check
+      - title: Go语言中文网
+        icon: users
+        details: 国内最大的Go语言社区，提供学习资源和交流平台
+        link: https://studygolang.com
 
-      - title: 提示容器
-        icon: box-archive
-        details: 用样式装饰 Markdown 内容
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/stylize/hint.html
+      - title: Golang中国
+        icon: flag
+        details: Go语言中国社区，分享Go语言相关资讯
+        link: https://golangtc.com
 
-      - title: GFM 警告
-        icon: bell
-        details: GFM 风格的警告容器
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/stylize/alert.html
+      - title: GoCN
+        icon: comment-dots
+        details: Go中国社区，技术分享和交流
+        link: https://gocn.vip
 
-      - title: 选项卡
-        icon: table-columns
-        details: 使用选项卡对相似内容进行分组
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/content/tabs.html
+      - title: Go Forum
+        icon: forum
+        details: 官方Go语言论坛，国际交流平台
+        link: https://forum.golangbridge.org
 
-      - title: 代码组
-        icon: code
-        details: 使用选项卡对相似代码进行分组
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/code/code-tabs.html
+      - title: golang-nuts
+        icon: nuts
+        details: Go语言官方邮件列表，深度技术讨论
+        link: https://groups.google.com/g/golang-nuts
 
-      - title: 自定义对齐
-        icon: align-center
-        details: Markdown 中对内容进行自定义对齐
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/stylize/align.html
-
-      - title: 自定义属性
-        icon: code
-        details: 为 Markdown 元素添加属性
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/stylize/attrs.html
-
-      - title: 上下角标
-        icon: superscript
-        details: 轻松在 Markdown 中添加上下角标
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/stylize/sup-sub.html
-
-      - title: 脚注
-        icon: quote-left
-        details: 在内容中插入脚注
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/content/footnote.html
-
-      - title: 标记
-        icon: highlighter
-        details: 标记并高亮内容
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/stylize/mark.html
-
-      - title: 剧透
-        icon: eraser
-        details: 添加剧透标记支持
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/stylize/spoiler.html
-
-      - title: 任务列表
-        icon: square-check
-        details: 轻松插入任务列表
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/grammar/tasklist.html
-
-      - title: 图片语法
-        icon: image
-        details: 使用改进的语法指定图片大小与颜色模式
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/grammar/image.html
-
-      - title: 组件支持
-        icon: puzzle-piece
-        details: 在 Markdown 中轻松插入组件
-        link: https://theme-hope.vuejs.press/zh/guide/component/grammar.html
-
-      - title: 组件
-        icon: puzzle-piece
-        details: 开箱即用的常用组件
-        link: https://theme-hope.vuejs.press/zh/guide/component/built-in.html
-
-      - title: Chart.js 支持
-        icon: chart-simple
-        details: 在 Markdown 中展示 Chart.js 图表
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/chart/chartjs.html
-
-      - title: 流程图支持
-        icon: route
-        details: 在 Markdown 中直接写出流程图
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/chart/flowchart.html
-
-      - title: Mermaid 支持
-        icon: chart-pie
-        details: 在 Markdown 中添加 Mermaid 图例
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/chart/mermaid.html
-
-      - title: Plantuml 支持
-        icon: diagram-project
-        details: 在 Markdown 中添加 Plant UML 图表
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/chart/plantuml.html
-
-      - title: Tex 支持
-        icon: square-root-variable
-        details: Markdown 现在也可以支持 Tex 语法以显示公式
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/grammar/math.html
-
-      - title: 导入文件支持
-        icon: fab fa-markdown
-        details: 将你的文档分段，并在 Markdown 中导入
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/content/include.html
-
-      - title: 交互演示支持
-        icon: code
-        details: 你可以在 Markdown 中添加交互演示
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/code/playground.html
-
-      - title: Kotlin 交互演示支持
-        icon: fab fa-kickstarter
-        details: 响应式的 Kotlin 演示
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/code/kotlin-playground.html
-
-      - title: Vue 交互演示支持
-        icon: fab fa-vuejs
-        details: 在交互演示中展示 Vue 组件
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/code/vue-playground.html
-
-      - title: Sandpack 交互演示支持
-        icon: code
-        details: Sandpack 驱动的实时的编码环境
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/code/sandpack.html
-
-      - title: 代码案例支持
-        icon: laptop-code
-        details: 你可以很方便的插入代码案例
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/code/demo.html
-
-      - title: 幻灯片支持
-        icon: person-chalkboard
-        details: 通过 Reveal.js 在 Markdown 中插入幻灯片
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/content/revealjs.html
-
-  - header: 可定制的页面
-    description: 完整无障碍支持的可定制外观
+  - header: 开发工具
+    description: 提升开发效率的Go语言工具集
     image: /assets/image/ui.svg
     bgImage: https://theme-hope-assets.vuejs.press/bg/9-light.svg
     bgImageDark: https://theme-hope-assets.vuejs.press/bg/9-dark.svg
     highlights:
-      - title: 深色模式
-        icon: circle-half-stroke
-        details: 可以自由切换浅色模式与深色模式
-        link: https://theme-hope.vuejs.press/zh/guide/interface/darkmode.html
+      - title: GoLand
+        icon: jetbrains
+        details: 一个专为Go开发者设计的跨平台 IDE
+        link: https://www.jetbrains.com/go
 
-      - title: 主题色切换
-        icon: palette
-        details: 支持自定义主题色并允许用户在预设的主题颜色之间切换
-        link: https://theme-hope.vuejs.press/zh/guide/interface/theme-color.html
+      - title: VSCode
+        icon: code
+        details: 重新定义代码编辑器,微软出品、免费、开源的现代编辑器
+        link: https://code.visualstudio.com
 
-      - title: 更多
-        icon: ellipsis
-        details: RTL 布局，打印支持，全局按钮等
-        link: https://theme-hope.vuejs.press/zh/guide/interface/others.html
+      - title: Vim/Neovim
+        icon: terminal
+        details: 高效的文本编辑器，配合Go插件提升开发体验
+        link: https://neovim.io
 
-  - header: 布局
-    description: 一个完美的响应式布局。
+      - title: Go Playground
+        icon: play
+        details: 在线Go代码运行环境，快速测试代码片段
+        link: https://play.golang.org
+
+  - header: 学习资源
+    description: 从入门到精通的Go语言学习路径
     image: /assets/image/layout.svg
     bgImage: https://theme-hope-assets.vuejs.press/bg/5-light.svg
     bgImageDark: https://theme-hope-assets.vuejs.press/bg/5-dark.svg
     highlights:
-      - title: 导航栏
-        icon: window-maximize
-        details: 完全可定制的导航栏以及改进的移动端外观
-        link: https://theme-hope.vuejs.press/zh/guide/layout/navbar.html
+      - title: Go入门系列
+        icon: graduation-cap
+        details: Golangbot 系列入门教程中文翻译
+        link: https://studygolang.com/subject/1
 
-      - title: 侧边栏
-        icon: fas fa-window-maximize fa-rotate-270
-        details: 从文档标题或文件结构中自动生成侧边栏
-        link: https://theme-hope.vuejs.press/zh/guide/layout/sidebar.html
+      - title: Go语言圣经
+        icon: book-open
+        details: 《The Go Programming Language》中文版
+        link: https://github.com/golang-china/gopl-zh
 
-      - title: 幻灯片页面
-        icon: person-chalkboard
-        details: 添加幻灯片页面以显示你喜欢的内容
-        link: https://theme-hope.vuejs.press/zh/guide/layout/slides.html
+      - title: Go语言实战
+        icon: target
+        details: 《Go in Action》中文版，实战指南
+        link: https://github.com/unknwon/the-way-to-go_ZH_CN
 
-      - title: 布局增强
-        icon: object-group
-        details: 添加路径导航、页脚、改进的导航栏、改进的页面导航等。
-        link: https://theme-hope.vuejs.press/zh/guide/layout/
+      - title: Go语言高级编程
+        icon: crown
+        details: 深入理解Go语言的高级特性和最佳实践
+        link: https://github.com/chai2010/advanced-go-programming-book
 
-      - title: 更多
-        icon: ellipsis
-        details: RTL 布局，打印支持，全局按钮等
-        link: https://theme-hope.vuejs.press/zh/guide/interface/others.html
+      - title: Go语言并发编程
+        icon: network-wired
+        details: 专门讲解Go语言并发编程的教程
+        link: https://github.com/unknwon/the-way-to-go_ZH_CN
 
-  - header: 新功能
+  - header: 框架与库
+    description: 优秀的Go语言框架和第三方库
     image: /assets/image/features.svg
     bgImage: https://theme-hope-assets.vuejs.press/bg/1-light.svg
     bgImageDark: https://theme-hope-assets.vuejs.press/bg/1-dark.svg
     features:
-      - title: 目录页面
-        icon: network-wired
-        details: 自动生成目录页以及开箱即用的目录组件
-        link: https://theme-hope.vuejs.press/zh/guide/feature/catalog.html
+      - title: Gin
+        icon: flask
+        details: 高性能的HTTP Web框架
+        link: https://github.com/gin-gonic/gin
 
-      - title: 浏览量与评论
-        icon: comment-dots
-        details: 配合 4 个评论服务开启阅读量统计与评论支持
-        link: https://theme-hope.vuejs.press/zh/guide/feature/comment.html
+      - title: Echo
+        icon: echo
+        details: 高性能、可扩展的Go Web框架
+        link: https://echo.labstack.com
 
-      - title: 文章信息
-        icon: circle-info
-        details: 为你的文章添加作者、写作日期、预计阅读时间、字数统计等信息
-        link: https://theme-hope.vuejs.press/zh/guide/feature/page-info.html
+      - title: Fiber
+        icon: bolt
+        details: 受Express.js启发的Web框架
+        link: https://gofiber.io
 
-      - title: 文章加密
-        icon: lock
-        details: 你可以为你的特定页面或特定目录进行加密，以便陌生人不能随意访问它们
-        link: https://theme-hope.vuejs.press/zh/guide/feature/encrypt.html
+      - title: GORM
+        icon: database
+        details: Go语言的ORM库，支持多种数据库
+        link: https://gorm.io
 
-      - title: 搜索支持
-        icon: search
-        details: 支持 docsearch 和基于客户端的搜索
-        link: https://theme-hope.vuejs.press/zh/guide/feature/search.html
+      - title: Go-Zero
+        icon: zero
+        details: 微服务框架，包含丰富的工具链
+        link: https://go-zero.dev
 
-      - title: 代码块
-        icon: code
-        details: 自定义代码块主题、行号、行高亮、复制按钮等
-        link: https://theme-hope.vuejs.press/zh/guide/markdown/code/fence.html.html
+      - title: Kratos
+        icon: atom
+        details: 哔哩哔哩开源的微服务框架
+        link: https://github.com/go-kratos/kratos
 
-      - title: 图片预览
-        icon: image
-        details: 像相册一样允许你浏览、缩放并分享你的页面图片
-        link: https://theme-hope.vuejs.press/zh/guide/feature/photo-swipe.html
-
-  - header: 博客
-    description: 通过主题创建个人博客
-    image: /assets/image/blog.svg
-    bgImage: https://theme-hope-assets.vuejs.press/bg/5-light.svg
-    bgImageDark: https://theme-hope-assets.vuejs.press/bg/5-dark.svg
-    highlights:
-      - title: 博客功能
-        icon: blog
-        details: 通过文章的日期、标签和分类展示文章
-        link: https://theme-hope.vuejs.press/zh/guide/blog/intro.html
-
-      - title: 博客主页
-        icon: home
-        details: 全新博客主页
-        link: https://theme-hope.vuejs.press/zh/guide/blog/home.html
-
-      - title: 博主信息
-        icon: home
-        details: 自定义名称、头像、座右铭和社交媒体链接
-        link: https://theme-hope.vuejs.press/zh/guide/blog/blogger.html
-
-      - title: 时间线
-        icon: home
-        details: 在时间线中浏览和通读博文
-        link: https://theme-hope.vuejs.press/zh/guide/blog/timeline.html
-
-  - header: 高级
-    description: 增强站点与用户体验的高级功能
+  - header: 微服务生态
+    description: 构建现代化微服务架构的工具和平台
     image: /assets/image/advanced.svg
     bgImage: https://theme-hope-assets.vuejs.press/bg/4-light.svg
     bgImageDark: https://theme-hope-assets.vuejs.press/bg/4-dark.svg
     highlights:
-      - title: SEO 增强
-        icon: dumbbell
-        details: 将最终生成的网页针对搜索引擎进行优化。
-        link: https://theme-hope.vuejs.press/zh/guide/advanced/seo.html
+      - title: gRPC
+        icon: rpc
+        details: 高性能的RPC框架，支持多种语言
+        link: https://grpc.io
 
-      - title: Sitemap
-        icon: sitemap
-        details: 自动为你的网站生成 Sitemap
-        link: https://theme-hope.vuejs.press/zh/guide/advanced/sitemap.html
+      - title: Protocol Buffers
+        icon: protocol
+        details: 高效的数据序列化格式
+        link: https://developers.google.com/protocol-buffers
 
-      - title: Feed 支持
-        icon: rss
-        details: 生成你的 Feed，并通知你的用户订阅它
-        link: https://theme-hope.vuejs.press/zh/guide/advanced/feed.html
+      - title: Consul
+        icon: consul
+        details: 服务发现和配置管理工具
+        link: https://www.consul.io
 
-      - title: PWA 支持
-        icon: mobile-screen
-        details: 让你的网站更像一个 APP
-        link: https://theme-hope.vuejs.press/zh/guide/advanced/pwa.html
+      - title: Etcd
+        icon: etcd
+        details: 分布式键值存储系统
+        link: https://etcd.io
+
+      - title: Prometheus
+        icon: prometheus
+        details: 开源的监控和告警系统
+        link: https://prometheus.io
+
+      - title: Jaeger
+        icon: tracing
+        details: 分布式追踪系统
+        link: https://www.jaegertracing.io
 
 copyright: false
-footer:  MIT 协议, 版权所有 © 2019-至今 Cospk
+footer: MIT 协议, 版权所有 © 2024 Go网址导航
 ---
 
-这是项目主页的案例。你可以在这里放置你的主体内容。
+## 🚀 快速开始
 
-想要使用此布局，你需要在页面 front matter 中设置 `home: true`。
+这是一个专门为Go语言开发者打造的网址导航，收集了Go语言生态中最有价值的资源。
 
-配置项的相关说明详见 [项目主页配置](https://theme-hope.vuejs.press/zh/guide/layout/home/)。
+### 📚 学习路径
+
+1. **入门阶段**: 从Go语言基础语法开始
+2. **进阶阶段**: 学习并发编程和标准库
+3. **实战阶段**: 掌握Web开发和微服务架构
+4. **高级阶段**: 深入性能优化和源码分析
+
+### 🛠️ 开发工具链
+
+- **IDE**: GoLand, VSCode, Vim/Neovim
+- **包管理**: Go Modules, GoProxy
+- **测试**: Go Test, Testify
+- **代码质量**: Golint, Go Vet, Staticcheck
+
+### 🌟 特色功能
+
+- 📖 精选学习资源，从入门到精通
+- 🛠️ 实用开发工具，提升开发效率  
+- 🏗️ 主流框架介绍，快速上手项目
+- 🌐 活跃社区推荐，交流学习经验
+- 📊 微服务生态，构建现代化应用
+
+---
+
+**💡 提示**: 点击上方分类可以快速找到你需要的资源，或者使用搜索功能精确定位。
