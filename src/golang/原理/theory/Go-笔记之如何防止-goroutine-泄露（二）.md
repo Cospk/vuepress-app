@@ -1,0 +1,66 @@
+---
+title: Go 笔记之如何防止 goroutine 泄露（二）
+source_url: 'https://studygolang.com/articles/22464'
+category: Go原理教程
+---
+
+<pre><code class="language-text">goroutine profile: total 1004
+948 @ 0x102e70b 0x102e7b3 0x10068ed 0x10066c5 0x1233b37 0x10595d1
+#   0x1233b36   main.query.func2+0x36   /Users/polo/Public/Work/go/src/study/goroutine/leak/06/main.go:20
+
+45 @ 0x102e70b 0x102e7b3 0x10068ed 0x10066c5 0x1233ae7 0x10595d1
+#   0x1233ae6   main.query.func1+0x36   /Users/polo/Public/Work/go/src/study/goroutine/leak/06/main.go:16
+
+7 @ 0x102e70b 0x102e7b3 0x10068ed 0x10066c5 0x1233b87 0x10595d1
+#   0x1233b86   main.query.func3+0x36   /Users/polo/Public/Work/go/src/study/goroutine/leak/06/main.go:24
+
+1 @ 0x102e70b 0x1029ba9 0x1029256 0x108b7da 0x108b8ed 0x108c216 0x112f80f 0x113b348 0x11f5f6a 0x10595d1
+#   0x1029255   internal/poll.runtime_pollWait+0x65     /usr/local/go/src/runtime/netpoll.go:173
+#   0x108b7d9   internal/poll.(*pollDesc).wait+0x99     /usr/local/go/src/internal/poll/fd_poll_runtime.go:85
+#   0x108b8ec   internal/poll.(*pollDesc).waitRead+0x3c     /usr/local/go/src/internal/poll/fd_poll_runtime.go:90
+#   0x108c215   internal/poll.(*FD).Read+0x1d5          /usr/local/go/src/internal/poll/fd_unix.go:169
+#   0x112f80e   net.(*netFD).Read+0x4e              /usr/local/go/src/net/fd_unix.go:202
+#   0x113b347   net.(*conn).Read+0x67               /usr/local/go/src/net/net.go:177
+#   0x11f5f69   net/http.(*connReader).backgroundRead+0x59  /usr/local/go/src/net/http/server.go:676
+
+1 @ 0x102e70b 0x1029ba9 0x1029256 0x108b7da 0x108b8ed 0x108c216 0x112f80f 0x113b348 0x11f63ec 0x10fb596 0x10fbf76 0x10fc174 0x119ebbf 0x119eaeb 0x11f315c 0x11f7672 0x11fb23e 0x10595d1
+#   0x1029255   internal/poll.runtime_pollWait+0x65     /usr/local/go/src/runtime/netpoll.go:173
+#   0x108b7d9   internal/poll.(*pollDesc).wait+0x99     /usr/local/go/src/internal/poll/fd_poll_runtime.go:85
+#   0x108b8ec   internal/poll.(*pollDesc).waitRead+0x3c     /usr/local/go/src/internal/poll/fd_poll_runtime.go:90
+#   0x108c215   internal/poll.(*FD).Read+0x1d5          /usr/local/go/src/internal/poll/fd_unix.go:169
+#   0x112f80e   net.(*netFD).Read+0x4e              /usr/local/go/src/net/fd_unix.go:202
+#   0x113b347   net.(*conn).Read+0x67               /usr/local/go/src/net/net.go:177
+#   0x11f63eb   net/http.(*connReader).Read+0xfb        /usr/local/go/src/net/http/server.go:786
+#   0x10fb595   bufio.(*Reader).fill+0x105          /usr/local/go/src/bufio/bufio.go:100
+#   0x10fbf75   bufio.(*Reader).ReadSlice+0x35          /usr/local/go/src/bufio/bufio.go:341
+#   0x10fc173   bufio.(*Reader).ReadLine+0x33           /usr/local/go/src/bufio/bufio.go:370
+#   0x119ebbe   net/textproto.(*Reader).readLineSlice+0x6e  /usr/local/go/src/net/textproto/reader.go:55
+#   0x119eaea   net/textproto.(*Reader).ReadLine+0x2a       /usr/local/go/src/net/textproto/reader.go:36
+#   0x11f315b   net/http.readRequest+0x8b           /usr/local/go/src/net/http/request.go:958
+#   0x11f7671   net/http.(*conn).readRequest+0x161      /usr/local/go/src/net/http/server.go:966
+#   0x11fb23d   net/http.(*conn).serve+0x49d            /usr/local/go/src/net/http/server.go:1788
+
+1 @ 0x102e70b 0x1029ba9 0x1029256 0x108b7da 0x108b8ed 0x108ce80 0x112fd92 0x1142c5e 0x1141967 0x11ff7df 0x121da4c 0x11fed5f 0x11fea16 0x11ff534 0x1233a91 0x102e317 0x10595d1
+#   0x1029255   internal/poll.runtime_pollWait+0x65     /usr/local/go/src/runtime/netpoll.go:173
+#   0x108b7d9   internal/poll.(*pollDesc).wait+0x99     /usr/local/go/src/internal/poll/fd_poll_runtime.go:85
+#   0x108b8ec   internal/poll.(*pollDesc).waitRead+0x3c     /usr/local/go/src/internal/poll/fd_poll_runtime.go:90
+#   0x108ce7f   internal/poll.(*FD).Accept+0x19f        /usr/local/go/src/internal/poll/fd_unix.go:384
+#   0x112fd91   net.(*netFD).accept+0x41            /usr/local/go/src/net/fd_unix.go:238
+#   0x1142c5d   net.(*TCPListener).accept+0x2d          /usr/local/go/src/net/tcpsock_posix.go:139
+#   0x1141966   net.(*TCPListener).AcceptTCP+0x46       /usr/local/go/src/net/tcpsock.go:247
+#   0x11ff7de   net/http.tcpKeepAliveListener.Accept+0x2e   /usr/local/go/src/net/http/server.go:3232
+#   0x11fed5e   net/http.(*Server).Serve+0x22e          /usr/local/go/src/net/http/server.go:2826
+#   0x11fea15   net/http.(*Server).ListenAndServe+0xb5      /usr/local/go/src/net/http/server.go:2764
+#   0x11ff533   net/http.ListenAndServe+0x73            /usr/local/go/src/net/http/server.go:3004
+#   0x1233a90   main.main+0xb0                  /Users/polo/Public/Work/go/src/study/goroutine/leak/06/main.go:40
+#   0x102e316   runtime.main+0x206              /usr/local/go/src/runtime/proc.go:201
+
+1 @ 0x122ce28 0x122cc30 0x1229694 0x1233723 0x11fc194 0x11fde37 0x11fe8eb 0x11fb3e6 0x10595d1
+#   0x122ce27   runtime/pprof.writeRuntimeProfile+0x97          /usr/local/go/src/runtime/pprof/pprof.go:707
+#   0x122cc2f   runtime/pprof.writeGoroutine+0x9f           /usr/local/go/src/runtime/pprof/pprof.go:669
+#   0x1229693   runtime/pprof.(*Profile).WriteTo+0x3e3          /usr/local/go/src/runtime/pprof/pprof.go:328
+#   0x1233722   study/goroutine/leak/06/leak.GoroutineStack+0x92    /Users/polo/Public/Work/go/src/study/goroutine/leak/06/leak/handlers.go:19
+#   0x11fc193   net/http.HandlerFunc.ServeHTTP+0x43         /usr/local/go/src/net/http/server.go:1964
+#   0x11fde36   net/http.(*ServeMux).ServeHTTP+0x126            /usr/local/go/src/net/http/server.go:2361
+#   0x11fe8ea   net/http.serverHandler.ServeHTTP+0xaa           /usr/local/go/src/net/http/server.go:2741
+#   0x11fb3e5   net/http.(*conn).serve+0x645                /usr/local/go/src/net/http/server.go:1847</code></pre>
