@@ -3,30 +3,6 @@ title: golang 内存分析/动态追踪
 source_url: 'https://studygolang.com/articles/9940'
 category: Go原理教程
 ---
-
-<pre class="highlight"><code>(pprof) top20 -cum
-322890.40MB of 666518.53MB total (48.44%)
-Dropped 342 nodes (cum <= 3332.59MB)
-Showing top 20 nodes out of 106 (cum >= 122316.23MB)
-      flat  flat%   sum%        cum   cum%
-         0     0%     0% 643525.16MB 96.55%  runtime.goexit
- 2184.63MB  0.33%  0.33% 620745.26MB 93.13%  net/http.(*conn).serve
-         0     0%  0.33% 435300.50MB 65.31%  xxxxx/api/server.(*HTTPServer).ServeHTTP
- 5865.22MB  0.88%  1.21% 435300.50MB 65.31%  xxxxx/api/server/router.(*httpRouter).ServeHTTP
-         0     0%  1.21% 433121.39MB 64.98%  net/http.serverHandler.ServeHTTP
-         0     0%  1.21% 430456.29MB 64.58%  xxxxx/api/server/filter.(*chain).Next
-   43.50MB 0.0065%  1.21% 429469.71MB 64.43%  xxxxx/api/server/filter.TransURLTov1
-         0     0%  1.21% 346440.39MB 51.98%  xxxxx/api/server/filter.Role30x
-31283.56MB  4.69%  5.91% 175309.48MB 26.30%  net/http.(*conn).readRequest
-         0     0%  5.91% 153589.85MB 23.04%  github.com/julienschmidt/httprouter.(*Router).ServeHTTP
-         0     0%  5.91% 153589.85MB 23.04%  github.com/julienschmidt/httprouter.(*Router).ServeHTTP-fm
-         0     0%  5.91% 153540.85MB 23.04%  xxxxx/api/server/router.(*httpRouter).Register.func1
-       2MB 0.0003%  5.91% 153117.78MB 22.97%  xxxxx/api/server/filter.Validate
-151134.52MB 22.68% 28.58% 151135.02MB 22.68%  runtime.rawstringtmp
-         0     0% 28.58% 150714.90MB 22.61%  xxxxx/api/server/router/naming/v1.(*serviceRouter).(git.intra.weibo.com/platform/vintage/api/server/router/naming/v1.service)-fm
-         0     0% 28.58% 150714.90MB 22.61%  xxxxx/api/server/router/naming/v1.(*serviceRouter).service
-         0     0% 28.58% 141200.76MB 21.18%  net/http.Redirect
-132334.96MB 19.85% 48.44% 132342.95MB 19.86%  runtime.mapassign
-      42MB 0.0063% 48.44% 125834.16MB 18.88%  xxxxx/api/server/router/naming/v1.heartbeat
-         0     0% 48.44% 122316.23MB 18.35%  xxxxxx/config.(*config).Lookup
-</code></pre>
+```
+ (pprof) top20 -cum 322890.40MB of 666518.53MB total (48.44%) Dropped 342 nodes (cum <= 3332.59MB) Showing top 20 nodes out of 106 (cum >= 122316.23MB) flat flat% sum% cum cum% 0 0% 0% 643525.16MB 96.55% runtime.goexit 2184.63MB 0.33% 0.33% 620745.26MB 93.13% net/http.(\*conn).serve 0 0% 0.33% 435300.50MB 65.31% xxxxx/api/server.(\*HTTPServer).ServeHTTP 5865.22MB 0.88% 1.21% 435300.50MB 65.31% xxxxx/api/server/router.(\*httpRouter).ServeHTTP 0 0% 1.21% 433121.39MB 64.98% net/http.serverHandler.ServeHTTP 0 0% 1.21% 430456.29MB 64.58% xxxxx/api/server/filter.(\*chain).Next 43.50MB 0.0065% 1.21% 429469.71MB 64.43% xxxxx/api/server/filter.TransURLTov1 0 0% 1.21% 346440.39MB 51.98% xxxxx/api/server/filter.Role30x 31283.56MB 4.69% 5.91% 175309.48MB 26.30% net/http.(\*conn).readRequest 0 0% 5.91% 153589.85MB 23.04% github.com/julienschmidt/httprouter.(\*Router).ServeHTTP 0 0% 5.91% 153589.85MB 23.04% github.com/julienschmidt/httprouter.(\*Router).ServeHTTP-fm 0 0% 5.91% 153540.85MB 23.04% xxxxx/api/server/router.(\*httpRouter).Register.func1 2MB 0.0003% 5.91% 153117.78MB 22.97% xxxxx/api/server/filter.Validate 151134.52MB 22.68% 28.58% 151135.02MB 22.68% runtime.rawstringtmp 0 0% 28.58% 150714.90MB 22.61% xxxxx/api/server/router/naming/v1.(\*serviceRouter).(git.intra.weibo.com/platform/vintage/api/server/router/naming/v1.service)-fm 0 0% 28.58% 150714.90MB 22.61% xxxxx/api/server/router/naming/v1.(\*serviceRouter).service 0 0% 28.58% 141200.76MB 21.18% net/http.Redirect 132334.96MB 19.85% 48.44% 132342.95MB 19.86% runtime.mapassign 42MB 0.0063% 48.44% 125834.16MB 18.88% xxxxx/api/server/router/naming/v1.heartbeat 0 0% 48.44% 122316.23MB 18.35% xxxxxx/config.(\*config).Lookup 
+```

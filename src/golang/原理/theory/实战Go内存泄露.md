@@ -3,5 +3,116 @@ title: 实战Go内存泄露
 source_url: 'https://studygolang.com/articles/20529'
 category: Go原理教程
 ---
+复制
 
-<button class="copy-btn">复制</button><figure class="highlight go"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// goroutine泄露导致内存泄露</span></span><br><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">	_ <span class="string">"net/http/pprof"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">	<span class="string">"time"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> {</span><br><span class="line">	<span class="comment">// 开启pprof</span></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> {</span><br><span class="line">		ip := <span class="string">"0.0.0.0:6060"</span></span><br><span class="line">		<span class="keyword">if</span> err := http.ListenAndServe(ip, <span class="literal">nil</span>); err != <span class="literal">nil</span> {</span><br><span class="line">			fmt.Printf(<span class="string">"start pprof failed on %s\n"</span>, ip)</span><br><span class="line">			os.Exit(<span class="number">1</span>)</span><br><span class="line">		}</span><br><span class="line">	}()</span><br><span class="line"></span><br><span class="line">	outCh := <span class="built_in">make</span>(<span class="keyword">chan</span> <span class="keyword">int</span>)</span><br><span class="line">	<span class="comment">// 死代码，永不读取</span></span><br><span class="line">	<span class="keyword">go</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> {</span><br><span class="line">		<span class="keyword">if</span> <span class="literal">false</span> {</span><br><span class="line">			<-outCh</span><br><span class="line">		}</span><br><span class="line">		<span class="keyword">select</span> {}</span><br><span class="line">	}()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 每s起100个goroutine，goroutine会阻塞，不释放内存</span></span><br><span class="line">	tick := time.Tick(time.Second / <span class="number">100</span>)</span><br><span class="line">	i := <span class="number">0</span></span><br><span class="line">	<span class="keyword">for</span> <span class="keyword">range</span> tick {</span><br><span class="line">		i++</span><br><span class="line">		fmt.Println(i)</span><br><span class="line">		alloc1(outCh)</span><br><span class="line">	}</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">alloc1</span><span class="params">(outCh <span class="keyword">chan</span><- <span class="keyword">int</span>)</span></span> {</span><br><span class="line">	<span class="keyword">go</span> alloc2(outCh)</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">alloc2</span><span class="params">(outCh <span class="keyword">chan</span><- <span class="keyword">int</span>)</span></span> {</span><br><span class="line">	<span class="function"><span class="keyword">func</span><span class="params">()</span></span> {</span><br><span class="line">		<span class="keyword">defer</span> fmt.Println(<span class="string">"alloc-fm exit"</span>)</span><br><span class="line">		<span class="comment">// 分配内存，假用一下</span></span><br><span class="line">		buf := <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">1024</span>*<span class="number">1024</span>*<span class="number">10</span>)</span><br><span class="line">		_ = <span class="built_in">len</span>(buf)</span><br><span class="line">		fmt.Println(<span class="string">"alloc done"</span>)</span><br><span class="line"></span><br><span class="line">		outCh <- <span class="number">0</span> <span class="comment">// 53行</span></span><br><span class="line">	}()</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+1  
+2  
+3  
+4  
+5  
+6  
+7  
+8  
+9  
+10  
+11  
+12  
+13  
+14  
+15  
+16  
+17  
+18  
+19  
+20  
+21  
+22  
+23  
+24  
+25  
+26  
+27  
+28  
+29  
+30  
+31  
+32  
+33  
+34  
+35  
+36  
+37  
+38  
+39  
+40  
+41  
+42  
+43  
+44  
+45  
+46  
+47  
+48  
+49  
+50  
+51  
+52  
+53  
+54  
+55  
+
+// goroutine泄露导致内存泄露  
+package main  
+  
+import (  
+	"fmt"  
+	"net/http"  
+	\_ "net/http/pprof"  
+	"os"  
+	"time"  
+)  
+  
+func main() {  
+	// 开启pprof  
+	go func() {  
+		ip := "0.0.0.0:6060"  
+		if err := http.ListenAndServe(ip, nil); err != nil {  
+			fmt.Printf("start pprof failed on %s\\n", ip)  
+			os.Exit(1)  
+		}  
+	}()  
+  
+	outCh := make(chan int)  
+	// 死代码，永不读取  
+	go func() {  
+		if false {  
+			<-outCh  
+		}  
+		select {}  
+	}()  
+  
+	// 每s起100个goroutine，goroutine会阻塞，不释放内存  
+	tick := time.Tick(time.Second / 100)  
+	i := 0  
+	for range tick {  
+		i++  
+		fmt.Println(i)  
+		alloc1(outCh)  
+	}  
+}  
+  
+func alloc1(outCh chan<- int) {  
+	go alloc2(outCh)  
+}  
+  
+func alloc2(outCh chan<- int) {  
+	func() {  
+		defer fmt.Println("alloc-fm exit")  
+		// 分配内存，假用一下  
+		buf := make(\[\]byte, 1024\*1024\*10)  
+		\_ = len(buf)  
+		fmt.Println("alloc done")  
+  
+		outCh <- 0 // 53行  
+	}()  
+}

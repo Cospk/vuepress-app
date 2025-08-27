@@ -3,779 +3,1023 @@ title: 深度解密Go语言之反射
 source_url: 'https://studygolang.com/articles/20246'
 category: Go原理教程
 ---
+反射和 Interface 息息相关，而 Interface 是我们[上一篇文章](https://mp.weixin.qq.com/s/EbxkBokYBajkCR-MazL0ZA)的内容。在开始正文前，和大家说点题外话。
 
+上一篇关于 Interface 的文章发出后，获得了很多的关注和阅读。比如，登上了 GoCN 的每日新闻第一条：
 
-						<p>反射和 Interface 息息相关，而 Interface 是我们<a href="https://mp.weixin.qq.com/s/EbxkBokYBajkCR-MazL0ZA">上一篇文章</a>的内容。在开始正文前，和大家说点题外话。</p>
-<p>上一篇关于 Interface 的文章发出后，获得了很多的关注和阅读。比如，登上了 GoCN 的每日新闻第一条：</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/57132448-3c13c880-6dd2-11e9-91b0-4d6b846a605e.png" alt="gocn"></p>
-<p>可能是编辑者觉得这篇文章称不上“深度解密”，把标题给小小地改动了下，哈哈~~</p>
-<p>在博客园登上了 48 小时阅读排行榜：</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/57132468-4a61e480-6dd2-11e9-953c-a981ed048dae.png" alt="博客园"></p>
-<p>在开发者头条 APP （类似于今日头条，不过内容都是技术相关的，还挺有意思的）上收获了 150 收藏，并被推荐到首页最显眼的 banner 位置，阅读量达到了 1w 多，只是不知道这个数字是否是真实的，有点难以相信。</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/57132395-0e2e8400-6dd2-11e9-88e7-f71605c3bb66.png" alt="开发者头条"></p>
-<p>很多同学在后台向我反映文章太长了，不利于阅读，建议拆分一下。我非常理解，读屏时代，大家需要快速地读完全文，拿到收益。而码农桃花源的文章都非常长，读者很难在短时间内读完，并且获得相应的收益。</p>
-<p>首先非常感谢大家的建议！其实我的想法是这样的：大家都在说，现在是一个信息严重过载的时代，信息多得看不完，不免产生很多焦虑。但是，我想说，优质的信息真有那么多吗？在我看来，文章的水平都是参差不齐，很多毫无内容和价值，大家把时间浪费在这些信息上面是很不值得的。因为你读了这些文章，就没有了读其他好的文章的精力。</p>
-<p>所以，码农桃花源想做一个优质信息源，提供优质的内容。每一篇文章都是有深度，有内容，有收获。一篇文章，我一般得花费 2 周左右，算是半月更，和那些日更的没法比。当然，只是在数量上没法比。而这个时代，最不缺的就是数量。</p>
-<p>另外，文章长也算是我的一个特色。我完全可以拆分成上、中、下等等，但我希望一次性交付给我的读者所有有价值的内容。这样，你可以集中一个小时或是更长时间，精读完一篇文章。</p>
-<p>闲话结束，今天要讲的内容是反射，进入正题。</p>
-<h1 id="什么是反射">什么是反射</h1>
-<p>直接看维基百科上的定义：</p>
-<blockquote>
-<p>在计算机科学中，反射是指计算机程序在运行时（Run time）可以访问、检测和修改它本身���态或行为的一种能力。用比喻来说，反射就是程序在运行的时候能够“观察”并且修改自己的行为。</p>
-</blockquote>
-<p>那我就要问个问题了：不用反射就不能在运行时访问、检测和修改它本身的状态和行为吗？</p>
-<p>问题的回答，其实要首先理解什么叫访问、检测和修改它本身状态或行为，它的本质是什么？</p>
-<p>实际上，它的本质是程序在运行期探知对象的类型信息和内存结构，不用反射能行吗？可以的！使用汇编语言，直接和内层打交道，什么信息不能获取？但是，当编程迁移到高级语言上来之后，就不行了！就只能通过<code>反射</code>来达到此项技能。</p>
-<p>不同语言的反射模型不尽相同，有些语言还不支持反射。《Go 语言圣经》中是这样定义反射的：</p>
-<blockquote>
-<p>Go 语言提供了一种机制在运行时更新变量和检查它们的值、调用它们的方法，但是在编译时并不知道这些变量的具体类型，这称为反射机制。</p>
-</blockquote>
-<h1 id="为什么要用反射">为什么要用反射</h1>
-<p>需要反射的 2 个常见场景：</p>
-<ol>
-<li>有时你需要编写一个函数，但是并不知道传给你的参数类型是什么，可能是没约定好；也可能是传入的类型很多，这些类型并不能统一表示。这时反射就会用的上了。</li>
-<li>有时候需要根据某些条件决定调用哪个函数，比如根据用户的输入来决定。这时就需要对函数和函数的参数进行反射，在运行期间动态地执行函数。</li>
-</ol>
-<p>在讲反射的原理以及如何用之前，还是说几点不使用反射的理由：</p>
-<ol>
-<li>与反射相关的代码，经常是难以阅读的。在软件工程中，代码可读性也是一个非常重要的指标。</li>
-<li>Go 语言作为一门静态语言，编码过程中，编译器能提前发现一些类型错误，但是对于反射代码是无能为力的。所以包含反射相关的代码，很可能会运行很久，才会出错，这时候经常是直接 panic，可能会造成严重的后果。</li>
-<li>反射对性能影响还是比较大的，比正常代码运行速度慢一到两个数量级。所以，对于一个项目中处于运行效率关键位置的代码，尽量避免使用反射特性。</li>
-</ol>
-<h1 id="反射是如何实现的">反射是如何实现的</h1>
-<p>上一篇文章讲到了 <code>interface</code>，它是 Go 语言实现抽象的一个非常强大的工具。当向接口变量赋予一个实体类型的时候，接口会存储实体的类型信息，反射就是通过接口的类型信息实现的，反射建立在类型的基础上。</p>
-<p>Go 语言在 reflect 包里定义了各种类型，实现了反射的各种函数，通过它们可以在运行时检测类型的信息、改变类型的值。</p>
-<h2 id="types-和-interface">types 和 interface</h2>
-<p>Go 语言中，每个变量都有一个静态类型，在编译阶段就确定了的，比如 <code>int, float64, []int</code> 等等。注意，这个类型是声明时候的类型，不是底层数据类型。</p>
-<p>Go 官方博客里就举了一个例子：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> MyInt <span class="hljs-keyword">int</span>
+![gocn](https://user-images.githubusercontent.com/7698088/57132448-3c13c880-6dd2-11e9-91b0-4d6b846a605e.png)
 
-<span class="hljs-keyword">var</span> i <span class="hljs-keyword">int</span>
-<span class="hljs-keyword">var</span> j MyInt</code></pre>
-<p>尽管 i，j 的底层类型都是 int，但我们知道，他们是不同的静态类型，除非进行类型转换，否则，i 和 j 不能同时出现在等号两侧。j 的静态类型就是 <code>MyInt</code>。</p>
-<p>反射主要与 interface{} 类型相关。前面一篇关于 interface 相关的文章已经探讨过 interface 的底层结构，这里再来复习一下。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> iface <span class="hljs-keyword">struct</span> {
+可能是编辑者觉得这篇文章称不上“深度解密”，把标题给小小地改动了下，哈哈~~
+
+在博客园登上了 48 小时阅读排行榜：
+
+![博客园](https://user-images.githubusercontent.com/7698088/57132468-4a61e480-6dd2-11e9-953c-a981ed048dae.png)
+
+在开发者头条 APP （类似于今日头条，不过内容都是技术相关的，还挺有意思的）上收获了 150 收藏，并被推荐到首页最显眼的 banner 位置，阅读量达到了 1w 多，只是不知道这个数字是否是真实的，有点难以相信。
+
+![开发者头条](https://user-images.githubusercontent.com/7698088/57132395-0e2e8400-6dd2-11e9-88e7-f71605c3bb66.png)
+
+很多同学在后台向我反映文章太长了，不利于阅读，建议拆分一下。我非常理解，读屏时代，大家需要快速地读完全文，拿到收益。而码农桃花源的文章都非常长，读者很难在短时间内读完，并且获得相应的收益。
+
+首先非常感谢大家的建议！其实我的想法是这样的：大家都在说，现在是一个信息严重过载的时代，信息多得看不完，不免产生很多焦虑。但是，我想说，优质的信息真有那么多吗？在我看来，文章的水平都是参差不齐，很多毫无内容和价值，大家把时间浪费在这些信息上面是很不值得的。因为你读了这些文章，就没有了读其他好的文章的精力。
+
+所以，码农桃花源想做一个优质信息源，提供优质的内容。每一篇文章都是有深度，有内容，有收获。一篇文章，我一般得花费 2 周左右，算是半月更，和那些日更的没法比。当然，只是在数量上没法比。而这个时代，最不缺的就是数量。
+
+另外，文章长也算是我的一个特色。我完全可以拆分成上、中、下等等，但我希望一次性交付给我的读者所有有价值的内容。这样，你可以集中一个小时或是更长时间，精读完一篇文章。
+
+闲话结束，今天要讲的内容是反射，进入正题。
+
+# 什么是反射
+
+直接看维基百科上的定义：
+
+> 在计算机科学中，反射是指计算机程序在运行时（Run time）可以访问、检测和修改它本身���态或行为的一种能力。用比喻来说，反射就是程序在运行的时候能够“观察”并且修改自己的行为。
+
+那我就要问个问题了：不用反射就不能在运行时访问、检测和修改它本身的状态和行为吗？
+
+问题的回答，其实要首先理解什么叫访问、检测和修改它本身状态或行为，它的本质是什么？
+
+实际上，它的本质是程序在运行期探知对象的类型信息和内存结构，不用反射能行吗？可以的！使用汇编语言，直接和内层打交道，什么信息不能获取？但是，当编程迁移到高级语言上来之后，就不行了！就只能通过`反射`来达到此项技能。
+
+不同语言的反射模型不尽相同，有些语言还不支持反射。《Go 语言圣经》中是这样定义反射的：
+
+> Go 语言提供了一种机制在运行时更新变量和检查它们的值、调用它们的方法，但是在编译时并不知道这些变量的具体类型，这称为反射机制。
+
+# 为什么要用反射
+
+需要反射的 2 个常见场景：
+
+1.  有时你需要编写一个函数，但是并不知道传给你的参数类型是什么，可能是没约定好；也可能是传入的类型很多，这些类型并不能统一表示。这时反射就会用的上了。
+2.  有时候需要根据某些条件决定调用哪个函数，比如根据用户的输入来决定。这时就需要对函数和函数的参数进行反射，在运行期间动态地执行函数。
+
+在讲反射的原理以及如何用之前，还是说几点不使用反射的理由：
+
+1.  与反射相关的代码，经常是难以阅读的。在软件工程中，代码可读性也是一个非常重要的指标。
+2.  Go 语言作为一门静态语言，编码过程中，编译器能提前发现一些类型错误，但是对于反射代码是无能为力的。所以包含反射相关的代码，很可能会运行很久，才会出错，这时候经常是直接 panic，可能会造成严重的后果。
+3.  反射对性能影响还是比较大的，比正常代码运行速度慢一到两个数量级。所以，对于一个项目中处于运行效率关键位置的代码，尽量避免使用反射特性。
+
+# 反射是如何实现的
+
+上一篇文章讲到了 `interface`，它是 Go 语言实现抽象的一个非常强大的工具。当向接口变量赋予一个实体类型的时候，接口会存储实体的类型信息，反射就是通过接口的类型信息实现的，反射建立在类型的基础上。
+
+Go 语言在 reflect 包里定义了各种类型，实现了反射的各种函数，通过它们可以在运行时检测类型的信息、改变类型的值。
+
+## types 和 interface
+
+Go 语言中，每个变量都有一个静态类型，在编译阶段就确定了的，比如 `int, float64, []int` 等等。注意，这个类型是声明时候的类型，不是底层数据类型。
+
+Go 官方博客里就举了一个例子：
+
+```
+type MyInt int
+
+var i int
+var j MyInt
+```
+
+尽管 i，j 的底层类型都是 int，但我们知道，他们是不同的静态类型，除非进行类型转换，否则，i 和 j 不能同时出现在等号两侧。j 的静态类型就是 `MyInt`。
+
+反射主要与 interface{} 类型相关。前面一篇关于 interface 相关的文章已经探讨过 interface 的底层结构，这里再来复习一下。
+
+```
+type iface struct {
     tab  *itab
     data unsafe.Pointer
 }
 
-<span class="hljs-keyword">type</span> itab <span class="hljs-keyword">struct</span> {
+type itab struct {
     inter  *interfacetype
     _type  *_type
     link   *itab
-    hash   <span class="hljs-keyword">uint32</span>
-    bad    <span class="hljs-keyword">bool</span>
-    inhash <span class="hljs-keyword">bool</span>
-    unused [<span class="hljs-number">2</span>]<span class="hljs-keyword">byte</span>
-    fun    [<span class="hljs-number">1</span>]<span class="hljs-keyword">uintptr</span>
-}</code></pre>
-<p>其中 <code>itab</code> 由具体类型 <code>_type</code> 以及 <code>interfacetype</code> 组成。<code>_type</code> 表示具体类型，而 <code>interfacetype</code> 则表示具体类型实现的接口类型。</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/56564826-82527600-65e1-11e9-956d-d98a212bc863.png" alt="iface 结构体全景"></p>
-<p>实际上，iface 描述的是非空接口，它包含方法；与之相对的是 <code>eface</code>，描述的是空接口，不包含任何方法，Go 语言里有的类型都 <code>“实现了”</code> 空接口。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> eface <span class="hljs-keyword">struct</span> {
+    hash   uint32
+    bad    bool
+    inhash bool
+    unused [2]byte
+    fun    [1]uintptr
+}
+```
+
+其中 `itab` 由具体类型 `_type` 以及 `interfacetype` 组成。`_type` 表示具体类型，而 `interfacetype` 则表示具体类型实现的接口类型。
+
+![iface 结构体全景](https://user-images.githubusercontent.com/7698088/56564826-82527600-65e1-11e9-956d-d98a212bc863.png)
+
+实际上，iface 描述的是非空接口，它包含方法；与之相对的是 `eface`，描述的是空接口，不包含任何方法，Go 语言里有的类型都 `“实现了”` 空接口。
+
+```
+type eface struct {
     _type *_type
     data  unsafe.Pointer
-}</code></pre>
-<p>相比 <code>iface</code>，<code>eface</code> 就比较简单了。只维护了一个 <code>_type</code> 字段，表示空接口所承载的具体的实体类型。<code>data</code> 描述了具体的值。</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/56565105-318f4d00-65e2-11e9-96bd-4b2e192791dc.png" alt="eface 结构体全景"></p>
-<p>还是用 Go 官方关于反射的博客里的例子，当然，我会用图形来详细解释，结合两者来看会更清楚。顺便提一下，搞技术的不要害怕英文资料，要想成为技术专家，读英文原始资料是技术提高的一条必经之路。</p>
-<p>先明确一点：接口变量可以存储任何实现了接口定义的所有方法的变量。</p>
-<p>Go 语言中最常见的就是 <code>Reader</code> 和 <code>Writer</code> 接口：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> Reader <span class="hljs-keyword">interface</span> {
-    Read(p []<span class="hljs-keyword">byte</span>) (n <span class="hljs-keyword">int</span>, err error)
+}
+```
+
+相比 `iface`，`eface` 就比较简单了。只维护了一个 `_type` 字段，表示空接口所承载的具体的实体类型。`data` 描述了具体的值。
+
+![eface 结构体全景](https://user-images.githubusercontent.com/7698088/56565105-318f4d00-65e2-11e9-96bd-4b2e192791dc.png)
+
+还是用 Go 官方关于反射的博客里的例子，当然，我会用图形来详细解释，结合两者来看会更清楚。顺便提一下，搞技术的不要害怕英文资料，要想成为技术专家，读英文原始资料是技术提高的一条必经之路。
+
+先明确一点：接口变量可以存储任何实现了接口定义的所有方法的变量。
+
+Go 语言中最常见的就是 `Reader` 和 `Writer` 接口：
+
+```
+type Reader interface {
+    Read(p []byte) (n int, err error)
 }
 
-<span class="hljs-keyword">type</span> Writer <span class="hljs-keyword">interface</span> {
-    Write(p []<span class="hljs-keyword">byte</span>) (n <span class="hljs-keyword">int</span>, err error)
-}</code></pre>
-<p>接下来，就是接口之间的各种转换和赋值了：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">var</span> r io.Reader
-tty, err := os.OpenFile(<span class="hljs-string">"/Users/qcrao/Desktop/test"</span>, os.O_RDWR, <span class="hljs-number">0</span>)
-<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
-    <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>, err
+type Writer interface {
+    Write(p []byte) (n int, err error)
 }
-r = tty</code></pre>
-<p>首先声明 <code>r</code> 的类型是 <code>io.Reader</code>，注意，这是 <code>r</code> 的静态类型，此时它的动态类型为 <code>nil</code>，并且它的动态值也是 <code>nil</code>。</p>
-<p>之后，<code>r = tty</code> 这一语句，将 <code>r</code> 的动态类型变成 <code>*os.File</code>，动态值则变成非空，表示打开的文件对象。这时，r 可以用<code><value, type></code>对来表示为： <code><tty, *os.File></code>。</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/56844299-b29b5c80-68e0-11e9-8211-d227448806b7.png" alt="r=tty"></p>
-<p>注意看上图，此时虽然 <code>fun</code> 所指向的函数只有一个 <code>Read</code> 函数，其实 <code>*os.File</code> 还包含 <code>Write</code> 函数，也就是说 <code>*os.File</code> 其实还实现了 <code>io.Writer</code> 接口。因此下面的断言语句可以执行：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">var</span> w io.Writer
-w = r.(io.Writer)</code></pre>
-<p>之所以用断言，而不能直接赋值，是因为 <code>r</code> 的静态类型是 <code>io.Reader</code>，并没有实现 <code>io.Writer</code> 接口。断言能否成功，看 <code>r</code> 的动态类型是否符合要求。</p>
-<p>这样，w 也可以表示成 <code><tty, *os.File></code>，仅管它和 <code>r</code> 一样，但是 w 可调用的函数取决于它的静态类型 <code>io.Writer</code>，也就是说它只能有这样的调用形式： <code>w.Write()</code> 。<code>w</code> 的内存形式如下图：</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/57341967-09215a00-716f-11e9-99cc-cfaa0f312b54.png" alt="w = r.(io.Writer)"></p>
-<p>和 <code>r</code> 相比，仅仅是 <code>fun</code> 对应的函数变了：<code>Read -> Write</code>。</p>
-<p>最后，再来一个赋值：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">var</span> empty <span class="hljs-keyword">interface</span>{}
-empty = w</code></pre>
-<p>由于 <code>empty</code> 是一个空接口，因此所有的类型都实现了它，w 可以直接赋给它，不需要执行断言操作。</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/56844669-9b5f6d80-68e6-11e9-8a31-8d38951c7742.png" alt="empty=w"></p>
-<p>从上面的三张图可以看到，interface 包含三部分信息：<code>_type</code> 是类型信息，<code>*data</code> 指向实际类型的实际值，<code>itab</code> 包含实际类型的信息，包括大小、包路径，还包含绑定在类型上的各种方法（图上没有画出方法），补充一下关于 os.File 结构体的图：</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/56946658-4bd6a700-6b5d-11e9-9a3d-0e781957be31.png" alt="struct_type"></p>
-<p>这一节的最后，复习一下上一篇关于 interface 的文章，提到的一个技巧，这里再展示一下：</p>
-<p>先参考源码，分别定义一个<code>“伪装”</code>的 iface 和 eface 结构体。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> iface <span class="hljs-keyword">struct</span> {
+```
+
+接下来，就是接口之间的各种转换和赋值了：
+
+```
+var r io.Reader
+tty, err := os.OpenFile("/Users/qcrao/Desktop/test", os.O_RDWR, 0)
+if err != nil {
+    return nil, err
+}
+r = tty
+```
+
+首先声明 `r` 的类型是 `io.Reader`，注意，这是 `r` 的静态类型，此时它的动态类型为 `nil`，并且它的动态值也是 `nil`。
+
+之后，`r = tty` 这一语句，将 `r` 的动态类型变成 `*os.File`，动态值则变成非空，表示打开的文件对象。这时，r 可以用对来表示为： 。
+
+![r=tty](https://user-images.githubusercontent.com/7698088/56844299-b29b5c80-68e0-11e9-8211-d227448806b7.png)
+
+注意看上图，此时虽然 `fun` 所指向的函数只有一个 `Read` 函数，其实 `*os.File` 还包含 `Write` 函数，也就是说 `*os.File` 其实还实现了 `io.Writer` 接口。因此下面的断言语句可以执行：
+
+```
+var w io.Writer
+w = r.(io.Writer)
+```
+
+之所以用断言，而不能直接赋值，是因为 `r` 的静态类型是 `io.Reader`，并没有实现 `io.Writer` 接口。断言能否成功，看 `r` 的动态类型是否符合要求。
+
+这样，w 也可以表示成 ，仅管它和 `r` 一样，但是 w 可调用的函数取决于它的静态类型 `io.Writer`，也就是说它只能有这样的调用形式： `w.Write()` 。`w` 的内存形式如下图：
+
+![w = r.(io.Writer)](https://user-images.githubusercontent.com/7698088/57341967-09215a00-716f-11e9-99cc-cfaa0f312b54.png)
+
+和 `r` 相比，仅仅是 `fun` 对应的函数变了：`Read -> Write`。
+
+最后，再来一个赋值：
+
+```
+var empty interface{}
+empty = w
+```
+
+由于 `empty` 是一个空接口，因此所有的类型都实现了它，w 可以直接赋给它，不需要执行断言操作。
+
+![empty=w](https://user-images.githubusercontent.com/7698088/56844669-9b5f6d80-68e6-11e9-8a31-8d38951c7742.png)
+
+从上面的三张图可以看到，interface 包含三部分信息：`_type` 是类型信息，`*data` 指向实际类型的实际值，`itab` 包含实际类型的信息，包括大小、包路径，还包含绑定在类型上的各种方法（图上没有画出方法），补充一下关于 os.File 结构体的图：
+
+![struct_type](https://user-images.githubusercontent.com/7698088/56946658-4bd6a700-6b5d-11e9-9a3d-0e781957be31.png)
+
+这一节的最后，复习一下上一篇关于 interface 的文章，提到的一个技巧，这里再展示一下：
+
+先参考源码，分别定义一个`“伪装”`的 iface 和 eface 结构体。
+
+```
+type iface struct {
     tab  *itab
     data unsafe.Pointer
 }
-<span class="hljs-keyword">type</span> itab <span class="hljs-keyword">struct</span> {
-    inter <span class="hljs-keyword">uintptr</span>
-    _type <span class="hljs-keyword">uintptr</span>
-    link <span class="hljs-keyword">uintptr</span>
-    hash  <span class="hljs-keyword">uint32</span>
-    _     [<span class="hljs-number">4</span>]<span class="hljs-keyword">byte</span>
-    fun   [<span class="hljs-number">1</span>]<span class="hljs-keyword">uintptr</span>
+type itab struct {
+    inter uintptr
+    _type uintptr
+    link uintptr
+    hash  uint32
+    _     [4]byte
+    fun   [1]uintptr
 }
 
-<span class="hljs-keyword">type</span> eface <span class="hljs-keyword">struct</span> {
-    _type <span class="hljs-keyword">uintptr</span>
+type eface struct {
+    _type uintptr
     data unsafe.Pointer
-}</code></pre>
-<p>接着，将接口变量占据的内存内容强制解释成上面定义的类型，再打印出来：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">package</span> main
+}
+```
 
-<span class="hljs-keyword">import</span> (
-    <span class="hljs-string">"os"</span>
-    <span class="hljs-string">"fmt"</span>
-    <span class="hljs-string">"io"</span>
-    <span class="hljs-string">"unsafe"</span>
+接着，将接口变量占据的内存内容强制解释成上面定义的类型，再打印出来：
+
+```
+package main
+
+import (
+    "os"
+    "fmt"
+    "io"
+    "unsafe"
 )
 
-<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
-    <span class="hljs-keyword">var</span> r io.Reader
-    fmt.Printf(<span class="hljs-string">"initial r: %T, %v\n"</span>, r, r)
+func main() {
+    var r io.Reader
+    fmt.Printf("initial r: %T, %v\n", r, r)
 
-    tty, _ := os.OpenFile(<span class="hljs-string">"/Users/qcrao/Desktop/test"</span>, os.O_RDWR, <span class="hljs-number">0</span>)
-    fmt.Printf(<span class="hljs-string">"tty: %T, %v\n"</span>, tty, tty)
+    tty, _ := os.OpenFile("/Users/qcrao/Desktop/test", os.O_RDWR, 0)
+    fmt.Printf("tty: %T, %v\n", tty, tty)
 
-    <span class="hljs-comment">// 给 r 赋值</span>
+    // 给 r 赋值
     r = tty
-    fmt.Printf(<span class="hljs-string">"r: %T, %v\n"</span>, r, r)
+    fmt.Printf("r: %T, %v\n", r, r)
 
     rIface := (*iface)(unsafe.Pointer(&r))
-    fmt.Printf(<span class="hljs-string">"r: iface.tab._type = %#x, iface.data = %#x\n"</span>, rIface.tab._type, rIface.data)
+    fmt.Printf("r: iface.tab._type = %#x, iface.data = %#x\n", rIface.tab._type, rIface.data)
 
-    <span class="hljs-comment">// 给 w 赋值</span>
-    <span class="hljs-keyword">var</span> w io.Writer
+    // 给 w 赋值
+    var w io.Writer
     w = r.(io.Writer)
-    fmt.Printf(<span class="hljs-string">"w: %T, %v\n"</span>, w, w)
+    fmt.Printf("w: %T, %v\n", w, w)
 
     wIface := (*iface)(unsafe.Pointer(&w))
-    fmt.Printf(<span class="hljs-string">"w: iface.tab._type = %#x, iface.data = %#x\n"</span>, wIface.tab._type, wIface.data)
+    fmt.Printf("w: iface.tab._type = %#x, iface.data = %#x\n", wIface.tab._type, wIface.data)
 
-    <span class="hljs-comment">// 给 empty 赋值</span>
-    <span class="hljs-keyword">var</span> empty <span class="hljs-keyword">interface</span>{}
+    // 给 empty 赋值
+    var empty interface{}
     empty = w
-    fmt.Printf(<span class="hljs-string">"empty: %T, %v\n"</span>, empty, empty)
+    fmt.Printf("empty: %T, %v\n", empty, empty)
 
     emptyEface := (*eface)(unsafe.Pointer(&empty))
-    fmt.Printf(<span class="hljs-string">"empty: eface._type = %#x, eface.data = %#x\n"</span>, emptyEface._type, emptyEface.data)
-}</code></pre>
-<p>运行结果：</p>
-<pre class="golang"><code class="hljs go">initial r: <<span class="hljs-literal">nil</span>>, <<span class="hljs-literal">nil</span>>
-tty: *os.File, &{<span class="hljs-number">0xc4200820f</span>0}
-r: *os.File, &{<span class="hljs-number">0xc4200820f</span>0}
-r: iface.tab._type = <span class="hljs-number">0x10bf</span>cc0, iface.data = <span class="hljs-number">0xc420080020</span>
-w: *os.File, &{<span class="hljs-number">0xc4200820f</span>0}
-w: iface.tab._type = <span class="hljs-number">0x10bf</span>cc0, iface.data = <span class="hljs-number">0xc420080020</span>
-empty: *os.File, &{<span class="hljs-number">0xc4200820f</span>0}
-empty: eface._type = <span class="hljs-number">0x10bf</span>cc0, eface.data = <span class="hljs-number">0xc420080020</span></code></pre>
-<p><code>r，w，empty</code> 的动态类型和动态值都一样。不再详细解释了，结合前面的图可以看得非常清晰。</p>
-<h2 id="反射的基本函数">反射的基本函数</h2>
-<p>reflect 包里定义了一个接口和一个结构体，即 <code>reflect.Type</code> 和 <code>reflect.Value</code>，它们提供很多函数来获取存储在接口里的类型信息。</p>
-<p><code>reflect.Type</code> 主要提供关于类型相关的信息，所以它和 <code>_type</code> 关联比较紧密；<code>reflect.Value</code> 则结合 <code>_type</code> 和 <code>data</code> 两者，因此程序员可以获取甚至改变类型的值。</p>
-<p>reflect 包中提供了两个基础的关于反射的函数来获取上述的接口和结构体：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TypeOf</span><span class="hljs-params">(i <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">Type</span> 
-<span class="hljs-title">func</span> <span class="hljs-title">ValueOf</span><span class="hljs-params">(i <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">Value</span></span></code></pre>
-<p><code>TypeOf</code> 函数用来提取一个接口中值的类型信息。由于它的输入参数是一个空的 <code>interface{}</code>，调用此函数时，实参会先被转化为 <code>interface{}</code>类型。这样，实参的类型信息、方法集、值信息都存储到 <code>interface{}</code> 变量里了。</p>
-<p>看下源码：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TypeOf</span><span class="hljs-params">(i <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">Type</span></span> {
+    fmt.Printf("empty: eface._type = %#x, eface.data = %#x\n", emptyEface._type, emptyEface.data)
+}
+```
+
+运行结果：
+
+```
+initial r: <nil>, <nil>
+tty: *os.File, &{0xc4200820f0}
+r: *os.File, &{0xc4200820f0}
+r: iface.tab._type = 0x10bfcc0, iface.data = 0xc420080020
+w: *os.File, &{0xc4200820f0}
+w: iface.tab._type = 0x10bfcc0, iface.data = 0xc420080020
+empty: *os.File, &{0xc4200820f0}
+empty: eface._type = 0x10bfcc0, eface.data = 0xc420080020
+```
+
+`r，w，empty` 的动态类型和动态值都一样。不再详细解释了，结合前面的图可以看得非常清晰。
+
+## 反射的基本函数
+
+reflect 包里定义了一个接口和一个结构体，即 `reflect.Type` 和 `reflect.Value`，它们提供很多函数来获取存储在接口里的类型信息。
+
+`reflect.Type` 主要提供关于类型相关的信息，所以它和 `_type` 关联比较紧密；`reflect.Value` 则结合 `_type` 和 `data` 两者，因此程序员可以获取甚至改变类型的值。
+
+reflect 包中提供了两个基础的关于反射的函数来获取上述的接口和结构体：
+
+```
+func TypeOf(i interface{}) Type 
+func ValueOf(i interface{}) Value
+```
+
+`TypeOf` 函数用来提取一个接口中值的类型信息。由于它的输入参数是一个空的 `interface{}`，调用此函数时，实参会先被转化为 `interface{}`类型。这样，实参的类型信息、方法集、值信息都存储到 `interface{}` 变量里了。
+
+看下源码：
+
+```
+func TypeOf(i interface{}) Type {
     eface := *(*emptyInterface)(unsafe.Pointer(&i))
-    <span class="hljs-keyword">return</span> toType(eface.typ)
-}</code></pre>
-<p>这里的 <code>emptyInterface</code> 和上面提到的 <code>eface</code> 是一回事（字段名略有差异，字段是相同的），且在不同的源码包：前者在 <code>reflect</code> 包，后者在 <code>runtime</code> 包。 <code>eface.typ</code> 就是动态类型。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> emptyInterface <span class="hljs-keyword">struct</span> {
+    return toType(eface.typ)
+}
+```
+
+这里的 `emptyInterface` 和上面提到的 `eface` 是一回事（字段名略有差异，字段是相同的），且在不同的源码包：前者在 `reflect` 包，后者在 `runtime` 包。 `eface.typ` 就是动态类型。
+
+```
+type emptyInterface struct {
     typ  *rtype
     word unsafe.Pointer
-}</code></pre>
-<p>至于 <code>toType</code> 函数，只是做了一个类型转换：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">toType</span><span class="hljs-params">(t *rtype)</span> <span class="hljs-title">Type</span></span> {
-    <span class="hljs-keyword">if</span> t == <span class="hljs-literal">nil</span> {
-        <span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+```
+
+至于 `toType` 函数，只是做了一个类型转换：
+
+```
+func toType(t *rtype) Type {
+    if t == nil {
+        return nil
     }
-    <span class="hljs-keyword">return</span> t
-}</code></pre>
-<p>注意，返回值 <code>Type</code> 实际上是一个接口，定义了很多方法，用来获取类型相关的各种信息，而 <code>*rtype</code> 实现了 <code>Type</code> 接口。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> Type <span class="hljs-keyword">interface</span> {
-    <span class="hljs-comment">// 所有的类型都可以调用下面这些函数</span>
+    return t
+}
+```
 
-    <span class="hljs-comment">// 此类型的变量对齐后所占用的字节数</span>
-    Align() <span class="hljs-keyword">int</span>
+注意，返回值 `Type` 实际上是一个接口，定义了很多方法，用来获取类型相关的各种信息，而 `*rtype` 实现了 `Type` 接口。
+
+```
+type Type interface {
+    // 所有的类型都可以调用下面这些函数
+
+    // 此类型的变量对齐后所占用的字节数
+    Align() int
     
-    <span class="hljs-comment">// 如果是 struct 的字段，对齐后占用的字节数</span>
-    FieldAlign() <span class="hljs-keyword">int</span>
+    // 如果是 struct 的字段，对齐后占用的字节数
+    FieldAlign() int
 
-    <span class="hljs-comment">// 返回类型方法集里的第 `i` (传入的参数)个方法</span>
-    Method(<span class="hljs-keyword">int</span>) Method
+    // 返回类型方法集里的第 `i` (传入的参数)个方法
+    Method(int) Method
 
-    <span class="hljs-comment">// 通过名称获取方法</span>
-    MethodByName(<span class="hljs-keyword">string</span>) (Method, <span class="hljs-keyword">bool</span>)
+    // 通过名称获取方法
+    MethodByName(string) (Method, bool)
 
-    <span class="hljs-comment">// 获取类型方法集里导出的方法个数</span>
-    NumMethod() <span class="hljs-keyword">int</span>
+    // 获取类型方法集里导出的方法个数
+    NumMethod() int
 
-    <span class="hljs-comment">// 类型名称</span>
-    Name() <span class="hljs-keyword">string</span>
+    // 类型名称
+    Name() string
 
-    <span class="hljs-comment">// 返回类型所在的路径，如：encoding/base64</span>
-    PkgPath() <span class="hljs-keyword">string</span>
+    // 返回类型所在的路径，如：encoding/base64
+    PkgPath() string
 
-    <span class="hljs-comment">// 返回类型的大小，和 unsafe.Sizeof 功能类似</span>
-    Size() <span class="hljs-keyword">uintptr</span>
+    // 返回类型的大小，和 unsafe.Sizeof 功能类似
+    Size() uintptr
 
-    <span class="hljs-comment">// 返回类型的字符串表示形式</span>
-    String() <span class="hljs-keyword">string</span>
+    // 返回类型的字符串表示形式
+    String() string
 
-    <span class="hljs-comment">// 返回类型的类型值</span>
+    // 返回类型的类型值
     Kind() Kind
 
-    <span class="hljs-comment">// 类型是否实现了接口 u</span>
-    Implements(u Type) <span class="hljs-keyword">bool</span>
+    // 类型是否实现了接口 u
+    Implements(u Type) bool
 
-    <span class="hljs-comment">// 是否可以赋值给 u</span>
-    AssignableTo(u Type) <span class="hljs-keyword">bool</span>
+    // 是否可以赋值给 u
+    AssignableTo(u Type) bool
 
-    <span class="hljs-comment">// 是否可以类型转换成 u</span>
-    ConvertibleTo(u Type) <span class="hljs-keyword">bool</span>
+    // 是否可以类型转换成 u
+    ConvertibleTo(u Type) bool
 
-    <span class="hljs-comment">// 类型是否可以比较</span>
-    Comparable() <span class="hljs-keyword">bool</span>
+    // 类型是否可以比较
+    Comparable() bool
 
-    <span class="hljs-comment">// 下面这些函数只有特定类型可以调用</span>
-    <span class="hljs-comment">// 如：Key, Elem 两个方法就只能是 Map 类型才能调用</span>
+    // 下面这些函数只有特定类型可以调用
+    // 如：Key, Elem 两个方法就只能是 Map 类型才能调用
     
-    <span class="hljs-comment">// 类型所占据的位数</span>
-    Bits() <span class="hljs-keyword">int</span>
+    // 类型所占据的位数
+    Bits() int
 
-    <span class="hljs-comment">// 返回通道的方向，只能是 chan 类型调用</span>
+    // 返回通道的方向，只能是 chan 类型调用
     ChanDir() ChanDir
 
-    <span class="hljs-comment">// 返回类型是否是可变参数，只能是 func 类型调用</span>
-    <span class="hljs-comment">// 比如 t 是类型 func(x int, y ... float64)</span>
-    <span class="hljs-comment">// 那么 t.IsVariadic() == true</span>
-    IsVariadic() <span class="hljs-keyword">bool</span>
+    // 返回类型是否是可变参数，只能是 func 类型调用
+    // 比如 t 是类型 func(x int, y ... float64)
+    // 那么 t.IsVariadic() == true
+    IsVariadic() bool
 
-    <span class="hljs-comment">// 返回内部子元素类型，只能由类型 Array, Chan, Map, Ptr, or Slice 调用</span>
+    // 返回内部子元素类型，只能由类型 Array, Chan, Map, Ptr, or Slice 调用
     Elem() Type
 
-    <span class="hljs-comment">// 返回结构体类型的第 i 个字段，只能是结构体类型调用</span>
-    <span class="hljs-comment">// 如果 i 超过了总字段数，就会 panic</span>
-    Field(i <span class="hljs-keyword">int</span>) StructField
+    // 返回结构体类型的第 i 个字段，只能是结构体类型调用
+    // 如果 i 超过了总字段数，就会 panic
+    Field(i int) StructField
 
-    <span class="hljs-comment">// 返回嵌套的结构体的字段</span>
-    FieldByIndex(index []<span class="hljs-keyword">int</span>) StructField
+    // 返回嵌套的结构体的字段
+    FieldByIndex(index []int) StructField
 
-    <span class="hljs-comment">// 通过字段名称获取字段</span>
-    FieldByName(name <span class="hljs-keyword">string</span>) (StructField, <span class="hljs-keyword">bool</span>)
+    // 通过字段名称获取字段
+    FieldByName(name string) (StructField, bool)
 
-    <span class="hljs-comment">// FieldByNameFunc returns the struct field with a name</span>
-    <span class="hljs-comment">// 返回名称符合 func 函数的字段</span>
-    FieldByNameFunc(match <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(<span class="hljs-keyword">string</span>)</span> <span class="hljs-title">bool</span>) <span class="hljs-params">(StructField, <span class="hljs-keyword">bool</span>)</span>
+    // FieldByNameFunc returns the struct field with a name
+    // 返回名称符合 func 函数的字段
+    FieldByNameFunc(match func(string) bool) (StructField, bool)
 
-    // 获取函数类型的第 <span class="hljs-title">i</span> 个参数的类型
-    <span class="hljs-title">In</span><span class="hljs-params">(i <span class="hljs-keyword">int</span>)</span> <span class="hljs-title">Type</span>
+    // 获取函数类型的第 i 个参数的类型
+    In(i int) Type
 
-    // 返回 <span class="hljs-title">map</span> 的 <span class="hljs-title">key</span> 类型，只能由类型 <span class="hljs-title">map</span> 调用
-    <span class="hljs-title">Key</span><span class="hljs-params">()</span> <span class="hljs-title">Type</span>
+    // 返回 map 的 key 类型，只能由类型 map 调用
+    Key() Type
 
-    // 返回 <span class="hljs-title">Array</span> 的长度，只能由类型 <span class="hljs-title">Array</span> 调用
-    <span class="hljs-title">Len</span><span class="hljs-params">()</span> <span class="hljs-title">int</span>
+    // 返回 Array 的长度，只能由类型 Array 调用
+    Len() int
 
-    // 返回类型字段的数量，只能由类型 <span class="hljs-title">Struct</span> 调用
-    <span class="hljs-title">NumField</span><span class="hljs-params">()</span> <span class="hljs-title">int</span>
+    // 返回类型字段的数量，只能由类型 Struct 调用
+    NumField() int
 
     // 返回函数类型的输入参数个数
-    <span class="hljs-title">NumIn</span><span class="hljs-params">()</span> <span class="hljs-title">int</span>
+    NumIn() int
 
     // 返回函数类型的返回值个数
-    <span class="hljs-title">NumOut</span><span class="hljs-params">()</span> <span class="hljs-title">int</span>
+    NumOut() int
 
-    // 返回函数类型的第 <span class="hljs-title">i</span> 个值的类型
-    <span class="hljs-title">Out</span><span class="hljs-params">(i <span class="hljs-keyword">int</span>)</span> <span class="hljs-title">Type</span>
+    // 返回函数类型的第 i 个值的类型
+    Out(i int) Type
 
     // 返回类型结构体的相同部分
-    <span class="hljs-title">common</span><span class="hljs-params">()</span> *<span class="hljs-title">rtype</span>
+    common() *rtype
     
     // 返回类型结构体的不同部分
-    <span class="hljs-title">uncommon</span><span class="hljs-params">()</span> *<span class="hljs-title">uncommonType</span>
-}</span></code></pre>
-<p>可见 <code>Type</code> 定义了非常多的方法，通过它们可以获取类型的一切信息，大家一定要完整的过一遍上面所有的方法。</p>
-<p>注意到 <code>Type</code> 方法集的倒数第二个方法 <code>common</code><br>
-返回的 <code>rtype</code>类型，它和上一篇文章讲到的 <code>_type</code> 是一回事，而且源代码里也注释了：两边要保持同步：</p>
-<pre class="golang"><code class="hljs go"> <span class="hljs-comment">// rtype must be kept in sync with ../runtime/type.go:/^type._type.</span></code></pre>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> rtype <span class="hljs-keyword">struct</span> {
-    size       <span class="hljs-keyword">uintptr</span>
-    ptrdata    <span class="hljs-keyword">uintptr</span>
-    hash       <span class="hljs-keyword">uint32</span>
+    uncommon() *uncommonType
+}
+```
+
+可见 `Type` 定义了非常多的方法，通过它们可以获取类型的一切信息，大家一定要完整的过一遍上面所有的方法。
+
+注意到 `Type` 方法集的倒数第二个方法 `common`  
+返回的 `rtype`类型，它和上一篇文章讲到的 `_type` 是一回事，而且源代码里也注释了：两边要保持同步：
+
+```
+ // rtype must be kept in sync with ../runtime/type.go:/^type._type.
+```
+
+```
+type rtype struct {
+    size       uintptr
+    ptrdata    uintptr
+    hash       uint32
     tflag      tflag
-    align      <span class="hljs-keyword">uint8</span>
-    fieldAlign <span class="hljs-keyword">uint8</span>
-    kind       <span class="hljs-keyword">uint8</span>
+    align      uint8
+    fieldAlign uint8
+    kind       uint8
     alg        *typeAlg
-    gcdata     *<span class="hljs-keyword">byte</span>
+    gcdata     *byte
     str        nameOff
     ptrToThis  typeOff
-}</code></pre>
-<p>所有的类型都会包含 <code>rtype</code> 这个字段，表示各种类型的公共信息；另外，不同类型包含自己的一些独特的部分。</p>
-<p>比如下面的 <code>arrayType</code> 和 <code>chanType</code> 都包含 <code>rytpe</code>，而前者还包含 slice，len 等和数组相关的信息；后者则包含 <code>dir</code> 表示通道方向的信息。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-comment">// arrayType represents a fixed array type.</span>
-<span class="hljs-keyword">type</span> arrayType <span class="hljs-keyword">struct</span> {
-    rtype <span class="hljs-string">`reflect:"array"`</span>
-    elem  *rtype <span class="hljs-comment">// array element type</span>
-    slice *rtype <span class="hljs-comment">// slice type</span>
-    <span class="hljs-built_in">len</span>   <span class="hljs-keyword">uintptr</span>
+}
+```
+
+所有的类型都会包含 `rtype` 这个字段，表示各种类型的公共信息；另外，不同类型包含自己的一些独特的部分。
+
+比如下面的 `arrayType` 和 `chanType` 都包含 `rytpe`，而前者还包含 slice，len 等和数组相关的信息；后者则包含 `dir` 表示通道方向的信息。
+
+```
+// arrayType represents a fixed array type.
+type arrayType struct {
+    rtype `reflect:"array"`
+    elem  *rtype // array element type
+    slice *rtype // slice type
+    len   uintptr
 }
 
-<span class="hljs-comment">// chanType represents a channel type.</span>
-<span class="hljs-keyword">type</span> chanType <span class="hljs-keyword">struct</span> {
-    rtype <span class="hljs-string">`reflect:"chan"`</span>
-    elem  *rtype  <span class="hljs-comment">// channel element type</span>
-    dir   <span class="hljs-keyword">uintptr</span> <span class="hljs-comment">// channel direction (ChanDir)</span>
-}</code></pre>
-<p>注意到，<code>Type</code> 接口实现了 <code>String()</code> 函数，满足 <code>fmt.Stringer</code> 接口，因此使用 <code>fmt.Println</code> 打印的时候，输出的是 <code>String()</code> 的结果。另外，<code>fmt.Printf()</code> 函数，如果使用 <code>%T</code> 来作为格式参数，输出的是 <code>reflect.TypeOf</code> 的结果，也就是动态类型。例如：</p>
-<pre class="golang"><code class="hljs go">fmt.Printf(<span class="hljs-string">"%T"</span>, <span class="hljs-number">3</span>) <span class="hljs-comment">// int</span></code></pre>
-<hr>
-<p>讲完了 <code>TypeOf</code> 函数，再来看一下 <code>ValueOf</code> 函数。返回值 <code>reflect.Value</code> 表示 <code>interface{}</code> 里存储的实际变量，它能提供实际变量的各种信息。相关的方法常常是需要结合类型信息和值信息。例如，如果要提取一个结构体的字段信息，那就需要用到 _type (具体到这里是指 structType) 类型持有的关于结构体的字段信息、偏移信息，以及 <code>*data</code> 所指向的内容 —— 结构体的实际值。</p>
-<p>源码如下：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ValueOf</span><span class="hljs-params">(i <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">Value</span></span> {
-    <span class="hljs-keyword">if</span> i == <span class="hljs-literal">nil</span> {
-        <span class="hljs-keyword">return</span> Value{}
+// chanType represents a channel type.
+type chanType struct {
+    rtype `reflect:"chan"`
+    elem  *rtype  // channel element type
+    dir   uintptr // channel direction (ChanDir)
+}
+```
+
+注意到，`Type` 接口实现了 `String()` 函数，满足 `fmt.Stringer` 接口，因此使用 `fmt.Println` 打印的时候，输出的是 `String()` 的结果。另外，`fmt.Printf()` 函数，如果使用 `%T` 来作为格式参数，输出的是 `reflect.TypeOf` 的结果，也就是动态类型。例如：
+
+```
+fmt.Printf("%T", 3) // int
+```
+
+* * *
+
+讲完了 `TypeOf` 函数，再来看一下 `ValueOf` 函数。返回值 `reflect.Value` 表示 `interface{}` 里存储的实际变量，它能提供实际变量的各种信息。相关的方法常常是需要结合类型信息和值信息。例如，如果要提取一个结构体的字段信息，那就需要用到 \_type (具体到这里是指 structType) 类型持有的关于结构体的字段信息、偏移信息，以及 `*data` 所指向的内容 —— 结构体的实际值。
+
+源码如下：
+
+```
+func ValueOf(i interface{}) Value {
+    if i == nil {
+        return Value{}
     }
     
-   <span class="hljs-comment">// ……</span>
-    <span class="hljs-keyword">return</span> unpackEface(i)
+   // ……
+    return unpackEface(i)
 }
 
-<span class="hljs-comment">// 分解 eface</span>
-<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">unpackEface</span><span class="hljs-params">(i <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">Value</span></span> {
+// 分解 eface
+func unpackEface(i interface{}) Value {
     e := (*emptyInterface)(unsafe.Pointer(&i))
 
     t := e.typ
-    <span class="hljs-keyword">if</span> t == <span class="hljs-literal">nil</span> {
-        <span class="hljs-keyword">return</span> Value{}
+    if t == nil {
+        return Value{}
     }
     
     f := flag(t.Kind())
-    <span class="hljs-keyword">if</span> ifaceIndir(t) {
+    if ifaceIndir(t) {
         f |= flagIndir
     }
-    <span class="hljs-keyword">return</span> Value{t, e.word, f}
-}</code></pre>
-<p>从源码看，比较简单：将先将 <code>i</code> 转换成 <code>*emptyInterface</code> 类型， 再将它的 <code>typ</code> 字段和 <code>word</code> 字段以及一个标志位字段组装成一个 <code>Value</code> 结构体，而这就是 <code>ValueOf</code> 函数的返回值，它包含类型结构体指针、真实数据的地址、标志位。</p>
-<p>Value 结构体定义了很多方法，通过这些方法可以直接操作 Value 字段 ptr 所指向的实际数据：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-comment">// 设置切片的 len 字段，如果类型不是切片，就会panic</span>
- <span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">SetLen</span><span class="hljs-params">(n <span class="hljs-keyword">int</span>)</span>
- 
- // 设置切片的 <span class="hljs-title">cap</span> 字段
- <span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">SetCap</span><span class="hljs-params">(n <span class="hljs-keyword">int</span>)</span>
- 
- // 设置字典的 <span class="hljs-title">kv</span>
- <span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">SetMapIndex</span><span class="hljs-params">(key, val Value)</span>
+    return Value{t, e.word, f}
+}
+```
 
- // 返回切片、字符串、数组的索引 <span class="hljs-title">i</span> 处的值
- <span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">Index</span><span class="hljs-params">(i <span class="hljs-keyword">int</span>)</span> <span class="hljs-title">Value</span>
+从源码看，比较简单：将先将 `i` 转换成 `*emptyInterface` 类型， 再将它的 `typ` 字段和 `word` 字段以及一个标志位字段组装成一个 `Value` 结构体，而这就是 `ValueOf` 函数的返回值，它包含类型结构体指针、真实数据的地址、标志位。
+
+Value 结构体定义了很多方法，通过这些方法可以直接操作 Value 字段 ptr 所指向的实际数据：
+
+```
+// 设置切片的 len 字段，如果类型不是切片，就会panic
+ func (v Value) SetLen(n int)
+ 
+ // 设置切片的 cap 字段
+ func (v Value) SetCap(n int)
+ 
+ // 设置字典的 kv
+ func (v Value) SetMapIndex(key, val Value)
+
+ // 返回切片、字符串、数组的索引 i 处的值
+ func (v Value) Index(i int) Value
  
  // 根据名称获取结构体的内部字段值
- <span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">FieldByName</span><span class="hljs-params">(name <span class="hljs-keyword">string</span>)</span> <span class="hljs-title">Value</span>
+ func (v Value) FieldByName(name string) Value
  
- // ……</span></code></pre>
-<p><code>Value</code> 字段还有很多其他的方法。例如：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-comment">// 用来获取 int 类型的值</span>
-<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">Int</span><span class="hljs-params">()</span> <span class="hljs-title">int64</span>
+ // ……
+```
+
+`Value` 字段还有很多其他的方法。例如：
+
+```
+// 用来获取 int 类型的值
+func (v Value) Int() int64
 
 // 用来获取结构体字段（成员）数量
-<span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">NumField</span><span class="hljs-params">()</span> <span class="hljs-title">int</span>
+func (v Value) NumField() int
 
 // 尝试向通道发送数据（不会阻塞）
-<span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">TrySend</span><span class="hljs-params">(x reflect.Value)</span> <span class="hljs-title">bool</span>
+func (v Value) TrySend(x reflect.Value) bool
 
-// 通过参数列表 <span class="hljs-title">in</span> 调用 <span class="hljs-title">v</span> 值所代表的函数（或方法
-<span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">Call</span><span class="hljs-params">(in []Value)</span> <span class="hljs-params">(r []Value)</span> 
+// 通过参数列表 in 调用 v 值所代表的函数（或方法
+func (v Value) Call(in []Value) (r []Value) 
 
 // 调用变参长度可变的函数
-<span class="hljs-title">func</span> <span class="hljs-params">(v Value)</span> <span class="hljs-title">CallSlice</span><span class="hljs-params">(in []Value)</span> []<span class="hljs-title">Value</span> </span></code></pre>
-<p>不一一列举了，反正是非常多。可以去 <code>src/reflect/value.go</code> 去看看源码，搜索 <code>func (v Value)</code> 就能看到。</p>
-<p>另外，通过 <code>Type()</code> 方法和 <code>Interface()</code> 方法可以打通 <code>interface</code>、<code>Type</code>、<code>Value</code> 三者。Type() 方法也可以返回变量的类型信息，与 reflect.TypeOf() 函数等价。Interface() 方法可以将 Value 还原成原来的 interface。</p>
-<p>这里引用老钱《快学Go语言第十五课——反射》的一张图：</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/57130652-bb060280-6dcc-11e9-9c63-6e2bc4e33509.png" alt="三者关系"><br>
-总结一下：<code>TypeOf()</code> 函数返回一个接口，这个接口定义了一系列方法，利用这些方法可以获取关于类型的所有信息； <code>ValueOf()</code> 函数返回一个结构体变量，包含类型信息以及实际值。</p>
-<p>用一张图来串一下：</p>
-<p><img src="https://user-images.githubusercontent.com/7698088/56848267-6f111480-6919-11e9-826f-a809093d17ea.png" alt="value rtype"></p>
-<p>上图中，<code>rtye</code> 实现了 <code>Type</code> 接口，是所有类型的公共部分。emptyface 结构体和 eface 其实是一个东西，而 rtype 其实和 _type 是一个东西，只是一些字段稍微有点差别，比如 emptyface 的 word 字段和 eface 的 data 字段名称不同，但是数据型是一样的。</p>
-<h2 id="反射的三大定律">反射的三大定律</h2>
-<p>根据 Go 官方关于反射的博客，反射有三大定律：</p>
-<blockquote>
-<ol>
-<li>Reflection goes from interface value to reflection object.</li>
-</ol>
-</blockquote>
-<blockquote>
-<ol>
-<li>Reflection goes from reflection object to interface value.</li>
-</ol>
-</blockquote>
-<blockquote>
-<ol>
-<li>To modify a reflection object, the value must be settable.</li>
-</ol>
-</blockquote>
-<p>第一条是最基本的：反射是一种检测存储在 <code>interface</code> 中的类型和值机制。这可以通过 <code>TypeOf</code> 函数和 <code>ValueOf</code> 函数得到。</p>
-<p>第二条实际上和第一条是相反的机制，它将 <code>ValueOf</code> 的返回值通过 <code>Interface()</code> 函数反向转变成 <code>interface</code> 变量。</p>
-<p>前两条就是说 <code>接口型变量</code> 和 <code>反射类型对象</code> 可以相互转化，反射类型对象实际上就是指的前面说的 <code>reflect.Type</code> 和 <code>reflect.Value</code>。</p>
-<p>第三条不太好懂：如果需要操作一个反射变量，那么它必须是可设置的。反射变量可设置的本质是它存储了原变量本身，这样对反射变量的操作，就会反映到原变量本身；反之，如果反射变量不能代表原变量，那么操作了反射变量，不会对原变量产生任何影响，这会给使用者带来疑惑。所以第二种情况在语言层面是不被允许的。</p>
-<p>举一个经典例子：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">var</span> x <span class="hljs-keyword">float64</span> = <span class="hljs-number">3.4</span>
-v := reflect.ValueOf(x)
-v.SetFloat(<span class="hljs-number">7.1</span>) <span class="hljs-comment">// Error: will panic.</span></code></pre>
-<p>执行上面的代码会产生 panic，原因是反射变量 <code>v</code> 不能代表 <code>x</code> 本身，为什么？因为调用 <code>reflect.ValueOf(x)</code> 这一行代码的时候，传入的参数在函数内部只是一个拷贝，是值传递，所以 <code>v</code> 代表的只是 <code>x</code> 的一个拷贝，因此对 <code>v</code> 进行操作是被禁止的。</p>
-<p>可设置是反射变量 <code>Value</code> 的一个性质，但不是所有的 <code>Value</code> 都是可被设置的。</p>
-<p>就像在一般的函数里那样，当我们想改变传入的变量时，使用指针就可以解决了。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">var</span> x <span class="hljs-keyword">float64</span> = <span class="hljs-number">3.4</span>
-p := reflect.ValueOf(&x)
-fmt.Println(<span class="hljs-string">"type of p:"</span>, p.Type())
-fmt.Println(<span class="hljs-string">"settability of p:"</span>, p.CanSet())</code></pre>
-<p>输出是这样的：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> of p: *<span class="hljs-keyword">float64</span>
-settability of p: <span class="hljs-literal">false</span></code></pre>
-<p><code>p</code> 还不是代表 <code>x</code>，<code>p.Elem()</code> 才真正代表 <code>x</code>，这样就可以真正操作 <code>x</code> 了：</p>
-<pre class="golang"><code class="hljs go">v := p.Elem()
-v.SetFloat(<span class="hljs-number">7.1</span>)
-fmt.Println(v.Interface()) <span class="hljs-comment">// 7.1</span>
-fmt.Println(x) <span class="hljs-comment">// 7.1</span></code></pre>
-<p>关于第三条，记住一句话：如果想要操作原变量，反射变量 <code>Value</code> 必须要 hold 住原变量��地址才行。</p>
-<h1 id="反射相关函数的使用">反射相关函数的使用</h1>
-<h2 id="代码样例">代码样例</h2>
-<p>网��上各种博客文章里使用反射的样例代码非常多，读过这篇文章后，基本没有看不懂的，哈哈！不过，我这里还是举一个例子，并讲解一番：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">package</span> main
+func (v Value) CallSlice(in []Value) []Value 
+```
 
-<span class="hljs-keyword">import</span> (
-    <span class="hljs-string">"reflect"</span>
-    <span class="hljs-string">"fmt"</span>
+不一一列举了，反正是非常多。可以去 `src/reflect/value.go` 去看看源码，搜索 `func (v Value)` 就能看到。
+
+另外，通过 `Type()` 方法和 `Interface()` 方法可以打通 `interface`、`Type`、`Value` 三者。Type() 方法也可以返回变量的类型信息，与 reflect.TypeOf() 函数等价。Interface() 方法可以将 Value 还原成原来的 interface。
+
+这里引用老钱《快学Go语言第十五课——反射》的一张图：
+
+![三者关系](https://user-images.githubusercontent.com/7698088/57130652-bb060280-6dcc-11e9-9c63-6e2bc4e33509.png)  
+总结一下：`TypeOf()` 函数返回一个接口，这个接口定义了一系列方法，利用这些方法可以获取关于类型的所有信息； `ValueOf()` 函数返回一个结构体变量，包含类型信息以及实际值。
+
+用一张图来串一下：
+
+![value rtype](https://user-images.githubusercontent.com/7698088/56848267-6f111480-6919-11e9-826f-a809093d17ea.png)
+
+上图中，`rtye` 实现了 `Type` 接口，是所有类型的公共部分。emptyface 结构体和 eface 其实是一个东西，而 rtype 其实和 \_type 是一个东西，只是一些字段稍微有点差别，比如 emptyface 的 word 字段和 eface 的 data 字段名称不同，但是数据型是一样的。
+
+## 反射的三大定律
+
+根据 Go 官方关于反射的博客，反射有三大定律：
+
+> 1.  Reflection goes from interface value to reflection object.
+
+> 1.  Reflection goes from reflection object to interface value.
+
+> 1.  To modify a reflection object, the value must be settable.
+
+第一条是最基本的：反射是一种检测存储在 `interface` 中的类型和值机制。这可以通过 `TypeOf` 函数和 `ValueOf` 函数得到。
+
+第二条实际上和第一条是相反的机制，它将 `ValueOf` 的返回值通过 `Interface()` 函数反向转变成 `interface` 变量。
+
+前两条就是说 `接口型变量` 和 `反射类型对象` 可以相互转化，反射类型对象实际上就是指的前面说的 `reflect.Type` 和 `reflect.Value`。
+
+第三条不太好懂：如果需要操作一个反射变量，那么它必须是可设置的。反射变量可设置的本质是它存储了原变量本身，这样对反射变量的操作，就会反映到原变量本身；反之，如果反射变量不能代表原变量，那么操作了反射变量，不会对原变量产生任何影响，这会给使用者带来疑惑。所以第二种情况在语言层面是不被允许的。
+
+举一个经典例子：
+
+```
+var x float64 = 3.4
+v := reflect.ValueOf(x)
+v.SetFloat(7.1) // Error: will panic.
+```
+
+执行上面的代码会产生 panic，原因是反射变量 `v` 不能代表 `x` 本身，为什么？因为调用 `reflect.ValueOf(x)` 这一行代码的时候，传入的参数在函数内部只是一个拷贝，是值传递，所以 `v` 代表的只是 `x` 的一个拷贝，因此对 `v` 进行操作是被禁止的。
+
+可设置是反射变量 `Value` 的一个性质，但不是所有的 `Value` 都是可被设置的。
+
+就像在一般的函数里那样，当我们想改变传入的变量时，使用指针就可以解决了。
+
+```
+var x float64 = 3.4
+p := reflect.ValueOf(&x)
+fmt.Println("type of p:", p.Type())
+fmt.Println("settability of p:", p.CanSet())
+```
+
+输出是这样的：
+
+```
+type of p: *float64
+settability of p: false
+```
+
+`p` 还不是代表 `x`，`p.Elem()` 才真正代表 `x`，这样就可以真正操作 `x` 了：
+
+```
+v := p.Elem()
+v.SetFloat(7.1)
+fmt.Println(v.Interface()) // 7.1
+fmt.Println(x) // 7.1
+```
+
+关于第三条，记住一句话：如果想要操作原变量，反射变量 `Value` 必须要 hold 住原变量��地址才行。
+
+# 反射相关函数的使用
+
+## 代码样例
+
+网��上各种博客文章里使用反射的样例代码非常多，读过这篇文章后，基本没有看不懂的，哈哈！不过，我这里还是举一个例子，并讲解一番：
+
+```
+package main
+
+import (
+    "reflect"
+    "fmt"
 )
 
-<span class="hljs-keyword">type</span> Child <span class="hljs-keyword">struct</span> {
-    Name     <span class="hljs-keyword">string</span>
-    Grade    <span class="hljs-keyword">int</span>
-    Handsome <span class="hljs-keyword">bool</span>
+type Child struct {
+    Name     string
+    Grade    int
+    Handsome bool
 }
 
-<span class="hljs-keyword">type</span> Adult <span class="hljs-keyword">struct</span> {
-    ID         <span class="hljs-keyword">string</span> <span class="hljs-string">`qson:"Name"`</span>
-    Occupation <span class="hljs-keyword">string</span>
-    Handsome   <span class="hljs-keyword">bool</span>
+type Adult struct {
+    ID         string `qson:"Name"`
+    Occupation string
+    Handsome   bool
 }
 
-<span class="hljs-comment">// 如果输入参数 i 是 Slice，元素是结构体，有一个字段名为 `Handsome`，</span>
-<span class="hljs-comment">// 并且有一个字段的 tag 或者字段名是 `Name` ，</span>
-<span class="hljs-comment">// 如果该 `Name` 字段的值是 `qcrao`，</span>
-<span class="hljs-comment">// 就把结构体中名为 `Handsome` 的字段值设置为 true。</span>
-<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">handsome</span><span class="hljs-params">(i <span class="hljs-keyword">interface</span>{})</span></span> {
-    <span class="hljs-comment">// 获取 i 的反射变量 Value</span>
+// 如果输入参数 i 是 Slice，元素是结构体，有一个字段名为 `Handsome`，
+// 并且有一个字段的 tag 或者字段名是 `Name` ，
+// 如果该 `Name` 字段的值是 `qcrao`，
+// 就把结构体中名为 `Handsome` 的字段值设置为 true。
+func handsome(i interface{}) {
+    // 获取 i 的反射变量 Value
     v := reflect.ValueOf(i)
 
-    <span class="hljs-comment">// 确定 v 是一个 Slice</span>
-    <span class="hljs-keyword">if</span> v.Kind() != reflect.Slice {
-        <span class="hljs-keyword">return</span>
+    // 确定 v 是一个 Slice
+    if v.Kind() != reflect.Slice {
+        return
     }
 
-    <span class="hljs-comment">// 确定 v 是的元素为结构体</span>
-    <span class="hljs-keyword">if</span> e := v.Type().Elem(); e.Kind() != reflect.Struct {
-        <span class="hljs-keyword">return</span>
+    // 确定 v 是的元素为结构体
+    if e := v.Type().Elem(); e.Kind() != reflect.Struct {
+        return
     }
 
-    <span class="hljs-comment">// 确定结构体的字段名含有 "ID" 或者 json tag 标签为 `name`</span>
-    <span class="hljs-comment">// 确定结构体的字段名 "Handsome"</span>
+    // 确定结构体的字段名含有 "ID" 或者 json tag 标签为 `name`
+    // 确定结构体的字段名 "Handsome"
     st := v.Type().Elem()
 
-    <span class="hljs-comment">// 寻找字段名为 Name 或者 tag 的值为 Name 的字段</span>
-    foundName := <span class="hljs-literal">false</span>
-    <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i < st.NumField(); i++ {
+    // 寻找字段名为 Name 或者 tag 的值为 Name 的字段
+    foundName := false
+    for i := 0; i < st.NumField(); i++ {
         f := st.Field(i)
-        tag := f.Tag.Get(<span class="hljs-string">"qson"</span>)
+        tag := f.Tag.Get("qson")
 
-        <span class="hljs-keyword">if</span> (tag == <span class="hljs-string">"Name"</span> || f.Name == <span class="hljs-string">"Name"</span>) && f.Type.Kind() == reflect.String {
-            foundName = <span class="hljs-literal">true</span>
-            <span class="hljs-keyword">break</span>
+        if (tag == "Name" || f.Name == "Name") && f.Type.Kind() == reflect.String {
+            foundName = true
+            break
         }
     }
 
-    <span class="hljs-keyword">if</span> !foundName {
-        <span class="hljs-keyword">return</span>
+    if !foundName {
+        return
     }
 
-    <span class="hljs-keyword">if</span> niceField, foundHandsome := st.FieldByName(<span class="hljs-string">"Handsome"</span>); foundHandsome == <span class="hljs-literal">false</span> || niceField.Type.Kind() != reflect.Bool {
-        <span class="hljs-keyword">return</span>
+    if niceField, foundHandsome := st.FieldByName("Handsome"); foundHandsome == false || niceField.Type.Kind() != reflect.Bool {
+        return
     }
 
-    <span class="hljs-comment">// 设置名字为 "qcrao" 的对象的 "Handsome" 字段为 true</span>
-    <span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i < v.Len(); i++ {
+    // 设置名字为 "qcrao" 的对象的 "Handsome" 字段为 true
+    for i := 0; i < v.Len(); i++ {
         e := v.Index(i)
-        handsome := e.FieldByName(<span class="hljs-string">"Handsome"</span>)
+        handsome := e.FieldByName("Handsome")
 
-        <span class="hljs-comment">// 寻找字段名为 Name 或者 tag 的值为 Name 的字段</span>
-        <span class="hljs-keyword">var</span> name reflect.Value
-        <span class="hljs-keyword">for</span> j := <span class="hljs-number">0</span>; j < st.NumField(); j++ {
+        // 寻找字段名为 Name 或者 tag 的值为 Name 的字段
+        var name reflect.Value
+        for j := 0; j < st.NumField(); j++ {
             f := st.Field(j)
-            tag := f.Tag.Get(<span class="hljs-string">"qson"</span>)
+            tag := f.Tag.Get("qson")
 
-            <span class="hljs-keyword">if</span> tag == <span class="hljs-string">"Name"</span> || f.Name == <span class="hljs-string">"Name"</span> {
+            if tag == "Name" || f.Name == "Name" {
                 name = v.Index(i).Field(j)
             }
         }
 
-        <span class="hljs-keyword">if</span> name.String() == <span class="hljs-string">"qcrao"</span> {
-            handsome.SetBool(<span class="hljs-literal">true</span>)
+        if name.String() == "qcrao" {
+            handsome.SetBool(true)
         }
     }
 }
 
-<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+func main() {
     children := []Child{
-        {Name: <span class="hljs-string">"Ava"</span>, Grade: <span class="hljs-number">3</span>, Handsome: <span class="hljs-literal">true</span>},
-        {Name: <span class="hljs-string">"qcrao"</span>, Grade: <span class="hljs-number">6</span>, Handsome: <span class="hljs-literal">false</span>},
+        {Name: "Ava", Grade: 3, Handsome: true},
+        {Name: "qcrao", Grade: 6, Handsome: false},
     }
 
     adults := []Adult{
-        {ID: <span class="hljs-string">"Steve"</span>, Occupation: <span class="hljs-string">"Clerk"</span>, Handsome: <span class="hljs-literal">true</span>},
-        {ID: <span class="hljs-string">"qcrao"</span>, Occupation: <span class="hljs-string">"Go Programmer"</span>, Handsome: <span class="hljs-literal">false</span>},
+        {ID: "Steve", Occupation: "Clerk", Handsome: true},
+        {ID: "qcrao", Occupation: "Go Programmer", Handsome: false},
     }
 
-    fmt.Printf(<span class="hljs-string">"adults before handsome: %v\n"</span>, adults)
+    fmt.Printf("adults before handsome: %v\n", adults)
     handsome(adults)
-    fmt.Printf(<span class="hljs-string">"adults after handsome: %v\n"</span>, adults)
+    fmt.Printf("adults after handsome: %v\n", adults)
 
-    fmt.Println(<span class="hljs-string">"-------------"</span>)
+    fmt.Println("-------------")
 
-    fmt.Printf(<span class="hljs-string">"children before handsome: %v\n"</span>, children)
+    fmt.Printf("children before handsome: %v\n", children)
     handsome(children)
-    fmt.Printf(<span class="hljs-string">"children after handsome: %v\n"</span>, children)
-}</code></pre>
-<p>代码运行结果：</p>
-<pre class="shell"><code class="hljs">adults before handsome: [{Steve Clerk true} {qcrao Go Programmer false}]
+    fmt.Printf("children after handsome: %v\n", children)
+}
+```
+
+代码运行结果：
+
+```
+adults before handsome: [{Steve Clerk true} {qcrao Go Programmer false}]
 adults after handsome: [{Steve Clerk true} {qcrao Go Programmer true}]
 -------------
 children before handsome: [{Ava 3 true} {qcrao 6 false}]
-children after handsome: [{Ava 3 true} {qcrao 6 true}]</code></pre>
-<p>代码主要做的事情是：找出传入的参数为 Slice，并且 Slice 的元素为结构体，如果其中有一个字段名是 <code>Name</code> 或者是 标签名称为 <code>Name</code>，并且还有一个字段名是 <code>Handsome</code> 的情形。如果找到，并且字段名称为 <code>Name</code> 的实际值是 <code>qcrao</code> 的话，就把另一个字段 <code>Handsome</code> 的值置为 true。</p>
-<p>程序并不关心传入的结构体到底是什么，只要它的字段名包含 <code>Name</code> 和 <code>Handsome</code>，都是 handsome 函数要工作的对象。</p>
-<p>注意一点，<code>Adult</code> 结构体的标签 <code>qson:"Name"</code>，中间是没有空格的，否则 <code>Tag.Get("qson")</code> 识别不出来。</p>
-<h2 id="未导出成员">未导出成员</h2>
-<p>利用反射机制，对于结构体中未导出成员，可以读取，但不能修改其值。</p>
-<p>注意，正常情况下，代码是不能读取结构体未导出成员的，但通过反射可以越过这层限制。另外，通过反射，结构体中可以被修改的成员只有是导出成员，也就是字段名的首字母是大写的。</p>
-<blockquote>
-<p>一个可取地址的 reflect.Value 变量会记录一个结构体成员是否是未导出成员，如果是的话则拒绝修改操作。<br>
-CanAddr 不能说明一个变量是否可以被修改。<br>
-CanSet 则可以检查对应的 reflect.Value 是否可取地址并可被修改。</p>
-</blockquote>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">package</span> main
+children after handsome: [{Ava 3 true} {qcrao 6 true}]
+```
 
-<span class="hljs-keyword">import</span> (
-    <span class="hljs-string">"reflect"</span>
-    <span class="hljs-string">"fmt"</span>
+代码主要做的事情是：找出传入的参数为 Slice，并且 Slice 的元素为结构体，如果其中有一个字段名是 `Name` 或者是 标签名称为 `Name`，并且还有一个字段名是 `Handsome` 的情形。如果找到，并且字段名称为 `Name` 的实际值是 `qcrao` 的话，就把另一个字段 `Handsome` 的值置为 true。
+
+程序并不关心传入的结构体到底是什么，只要它的字段名包含 `Name` 和 `Handsome`，都是 handsome 函数要工作的对象。
+
+注意一点，`Adult` 结构体的标签 `qson:"Name"`，中间是没有空格的，否则 `Tag.Get("qson")` 识别不出来。
+
+## 未导出成员
+
+利用反射机制，对于结构体中未导出成员，可以读取，但不能修改其值。
+
+注意，正常情况下，代码是不能读取结构体未导出成员的，但通过反射可以越过这层限制。另外，通过反射，结构体中可以被修改的成员只有是导出成员，也就是字段名的首字母是大写的。
+
+> 一个可取地址的 reflect.Value 变量会记录一个结构体成员是否是未导出成员，如果是的话则拒绝修改操作。  
+> CanAddr 不能说明一个变量是否可以被修改。  
+> CanSet 则可以检查对应的 reflect.Value 是否可取地址并可被修改。
+
+```
+package main
+
+import (
+    "reflect"
+    "fmt"
 )
 
-<span class="hljs-keyword">type</span> Child <span class="hljs-keyword">struct</span> {
-    Name     <span class="hljs-keyword">string</span>
-    handsome <span class="hljs-keyword">bool</span>
+type Child struct {
+    Name     string
+    handsome bool
 }
 
-<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
-    qcrao := Child{Name: <span class="hljs-string">"qcrao"</span>, handsome: <span class="hljs-literal">true</span>}
+func main() {
+    qcrao := Child{Name: "qcrao", handsome: true}
 
     v := reflect.ValueOf(&qcrao)
 
-    f := v.Elem().FieldByName(<span class="hljs-string">"Name"</span>)
+    f := v.Elem().FieldByName("Name")
     fmt.Println(f.String())
 
-    f.SetString(<span class="hljs-string">"stefno"</span>)
+    f.SetString("stefno")
     fmt.Println(f.String())
 
-    f = v.Elem().FieldByName(<span class="hljs-string">"handsome"</span>)
+    f = v.Elem().FieldByName("handsome")
     
-    <span class="hljs-comment">// 这一句会导致 panic，因为 handsome 字段未导出</span>
-    <span class="hljs-comment">//f.SetBool(true)</span>
+    // 这一句会导致 panic，因为 handsome 字段未导出
+    //f.SetBool(true)
     fmt.Println(f.Bool())
-}</code></pre>
-<p>执行结果：</p>
-<pre class="shell"><code class="hljs">qcrao
+}
+```
+
+执行结果：
+
+```
+qcrao
 stefno
-true</code></pre>
-<p>上面的例子中，handsome 字段未导出，可以读取，但不能调用相关 set 方法，否则会 panic。反射用起来一定要小心，调用类型不匹配的方法，会导致各种 panic。</p>
-<h1 id="反射的实际应用">反射的实际应用</h1>
-<p>反射的实际应用非常广：IDE 中的代码自动补全功能、对象序列化（json 函数库）、fmt 相关函数的实现、ORM（全称是：Object Relational Mapping，对象关系映射）……</p>
-<p>这里举 2 个例子：json 序列化和 DeepEqual 函数。</p>
-<h2 id="json-序列化">json 序列化</h2>
-<p>开发过 web 服务的同学，一定用过 <code>json</code> 数据格式。<code>json</code> 是一种独立于语言的数据格式。最早用于浏览器和服务器之间的实时无状态的数据交换，并由此发展起来。</p>
-<p>Go 语言中，主要提供 2 个函数用于序列化和反序列化：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Marshal</span><span class="hljs-params">(v <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-params">([]<span class="hljs-keyword">byte</span>, error)</span>
-<span class="hljs-title">func</span> <span class="hljs-title">Unmarshal</span><span class="hljs-params">(data []<span class="hljs-keyword">byte</span>, v <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">error</span></span></code></pre>
-<p>两个函数的参数都包含 <code>interface</code>，具体实现的时候，都会用到反射相关的特性。</p>
-<p>对于序列化和反序列化函数，均需要知道参数的所有字段，包括字段类型和值，再调用相关的 get 函数或者 set 函数进行实际的操作。</p>
-<h2 id="deepequal-的作用及原理">DeepEqual 的作用及原理</h2>
-<p>在测试函数中，经常会需要这样的函数：判断两个变量的实际内容完全一致。</p>
-<p>例如：如何判断两个 slice 所有的元素完全相同；如何判断两个 map 的 key 和 value 完全相同等等。</p>
-<p>上述问题，可以通过 <code>DeepEqual</code> 函数实现。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">DeepEqual</span><span class="hljs-params">(x, y <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">bool</span></span></code></pre>
-<p><code>DeepEqual</code> 函数的参数是两个 <code>interface</code>，实际上也就是可以输入任意类型，输出 true 或者 flase 表示输入的两个变量是否是“深度”相等。</p>
-<p>先明白一点，如果是不同的类型，即使是底层类型相同，相应的值也相同，那么两者也不是“深度”相等。</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> MyInt <span class="hljs-keyword">int</span>
-<span class="hljs-keyword">type</span> YourInt <span class="hljs-keyword">int</span>
+true
+```
 
-<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
-    m := MyInt(<span class="hljs-number">1</span>)
-    y := YourInt(<span class="hljs-number">1</span>)
+上面的例子中，handsome 字段未导出，可以读取，但不能调用相关 set 方法，否则会 panic。反射用起来一定要小心，调用类型不匹配的方法，会导致各种 panic。
 
-    fmt.Println(reflect.DeepEqual(m, y)) <span class="hljs-comment">// false</span>
-}</code></pre>
-<p>上面的代码中，m, y 底层都是 int，而且值都是 1，但是两者静态类型不同，前者是 <code>MyInt</code>，后者是 <code>YourInt</code>，因此两者不是“深度”相等。</p>
-<p>在源码里，有对 DeepEqual 函数的非常清楚地注释，列举了不同类型，DeepEqual 的比较情形，这里做一个总结：</p>
-<table>
-<thead>
-<tr class="header">
-<th>类型</th>
-<th>深度相等情形</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Array</td>
-<td>相同索引处的元素“深度”相等</td>
-</tr>
-<tr class="even">
-<td>Struct</td>
-<td>相应字段，包含导出和不导出，“深度”相等</td>
-</tr>
-<tr class="odd">
-<td>Func</td>
-<td>只有两者都是 nil 时</td>
-</tr>
-<tr class="even">
-<td>Interface</td>
-<td>两者存储的具体值“深度”相等</td>
-</tr>
-<tr class="odd">
-<td>Map</td>
-<td>1、都为 nil；2、非空、长度相等，指向同一个 map 实体对象，或者相应的 key 指向的 value “深度”相等</td>
-</tr>
-<tr class="even">
-<td>Pointer</td>
-<td>1、使用 == 比较的结果相等；2、指向的实体“深度”相等</td>
-</tr>
-<tr class="odd">
-<td>Slice</td>
-<td>1、都为 nil；2、非空、长度相等，首元素指向同一个底层数组的相同元素，即 &x[0] == &y[0] 或者 相同索引处的元素“深度”相等</td>
-</tr>
-<tr class="even">
-<td>numbers, bools, strings, and channels</td>
-<td>使用 == 比较的结果为真</td>
-</tr>
-</tbody>
-</table>
-<p>一般情况下，DeepEqual 的实现只需要递归地调用 == 就可以比较两个变量是否是真的“深度”相等。</p>
-<p>但是，有一些异常情况：比如 func 类型是不可比较的类型，只有在两个 func 类型都是 nil 的情况下，才是“深度”相等；float 类型，由于精度的原因，也是不能使用 == 比较的；包含 func 类型或者 float 类型的 struct， interface， array 等。</p>
-<p>对于指针而言，当两个值相等的指针就是“深度”相等，因为两者指向的内容是相等的，即使两者指向的是 func 类型或者 float 类型，这种情况下不关心指针所指向的内容。</p>
-<p>同样，对于指向相同 slice， map 的两个变量也是“深度”相等的，不关心 slice， map 具体的内容。</p>
-<p>对于“有环”的类型，比如循环链表，比较两者是否“深度”相等的过程中，需要对已比较的内容作一个标记，一旦发现两个指针之前比较过，立即停止比较，并判定二者是深度相等的。这样做的原因是，及时停止比较，避免陷入无限循环。</p>
-<p>来看源码：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">DeepEqual</span><span class="hljs-params">(x, y <span class="hljs-keyword">interface</span>{})</span> <span class="hljs-title">bool</span></span> {
-    <span class="hljs-keyword">if</span> x == <span class="hljs-literal">nil</span> || y == <span class="hljs-literal">nil</span> {
-        <span class="hljs-keyword">return</span> x == y
+# 反射的实际应用
+
+反射的实际应用非常广：IDE 中的代码自动补全功能、对象序列化（json 函数库）、fmt 相关函数的实现、ORM（全称是：Object Relational Mapping，对象关系映射）……
+
+这里举 2 个例子：json 序列化和 DeepEqual 函数。
+
+## json 序列化
+
+开发过 web 服务的同学，一定用过 `json` 数据格式。`json` 是一种独立于语言的数据格式。最早用于浏览器和服务器之间的实时无状态的数据交换，并由此发展起来。
+
+Go 语言中，主要提供 2 个函数用于序列化和反序列化：
+
+```
+func Marshal(v interface{}) ([]byte, error)
+func Unmarshal(data []byte, v interface{}) error
+```
+
+两个函数的参数都包含 `interface`，具体实现的时候，都会用到反射相关的特性。
+
+对于序列化和反序列化函数，均需要知道参数的所有字段，包括字段类型和值，再调用相关的 get 函数或者 set 函数进行实际的操作。
+
+## DeepEqual 的作用及原理
+
+在测试函数中，经常会需要这样的函数：判断两个变量的实际内容完全一致。
+
+例如：如何判断两个 slice 所有的元素完全相同；如何判断两个 map 的 key 和 value 完全相同等等。
+
+上述问题，可以通过 `DeepEqual` 函数实现。
+
+```
+func DeepEqual(x, y interface{}) bool
+```
+
+`DeepEqual` 函数的参数是两个 `interface`，实际上也就是可以输入任意类型，输出 true 或者 flase 表示输入的两个变量是否是“深度”相等。
+
+先明白一点，如果是不同的类型，即使是底层类型相同，相应的值也相同，那么两者也不是“深度”相等。
+
+```
+type MyInt int
+type YourInt int
+
+func main() {
+    m := MyInt(1)
+    y := YourInt(1)
+
+    fmt.Println(reflect.DeepEqual(m, y)) // false
+}
+```
+
+上面的代码中，m, y 底层都是 int，而且值都是 1，但是两者静态类型不同，前者是 `MyInt`，后者是 `YourInt`，因此两者不是“深度”相等。
+
+在源码里，有对 DeepEqual 函数的非常清楚地注释，列举了不同类型，DeepEqual 的比较情形，这里做一个总结：
+
+类型
+
+深度相等情形
+
+Array
+
+相同索引处的元素“深度”相等
+
+Struct
+
+相应字段，包含导出和不导出，“深度”相等
+
+Func
+
+只有两者都是 nil 时
+
+Interface
+
+两者存储的具体值“深度”相等
+
+Map
+
+1、都为 nil；2、非空、长度相等，指向同一个 map 实体对象，或者相应的 key 指向的 value “深度”相等
+
+Pointer
+
+1、使用 == 比较的结果相等；2、指向的实体“深度”相等
+
+Slice
+
+1、都为 nil；2、非空、长度相等，首元素指向同一个底层数组的相同元素，即 &x\[0\] == &y\[0\] 或者 相同索引处的元素“深度”相等
+
+numbers, bools, strings, and channels
+
+使用 == 比较的结果为真
+
+一般情况下，DeepEqual 的实现只需要递归地调用 == 就可以比较两个变量是否是真的“深度”相等。
+
+但是，有一些异常情况：比如 func 类型是不可比较的类型，只有在两个 func 类型都是 nil 的情况下，才是“深度”相等；float 类型，由于精度的原因，也是不能使用 == 比较的；包含 func 类型或者 float 类型的 struct， interface， array 等。
+
+对于指针而言，当两个值相等的指针就是“深度”相等，因为两者指向的内容是相等的，即使两者指向的是 func 类型或者 float 类型，这种情况下不关心指针所指向的内容。
+
+同样，对于指向相同 slice， map 的两个变量也是“深度”相等的，不关心 slice， map 具体的内容。
+
+对于“有环”的类型，比如循环链表，比较两者是否“深度”相等的过程中，需要对已比较的内容作一个标记，一旦发现两个指针之前比较过，立即停止比较，并判定二者是深度相等的。这样做的原因是，及时停止比较，避免陷入无限循环。
+
+来看源码：
+
+```
+func DeepEqual(x, y interface{}) bool {
+    if x == nil || y == nil {
+        return x == y
     }
     v1 := ValueOf(x)
     v2 := ValueOf(y)
-    <span class="hljs-keyword">if</span> v1.Type() != v2.Type() {
-        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>
+    if v1.Type() != v2.Type() {
+        return false
     }
-    <span class="hljs-keyword">return</span> deepValueEqual(v1, v2, <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[visit]<span class="hljs-keyword">bool</span>), <span class="hljs-number">0</span>)
-}</code></pre>
-<p>首先查看两者是否有一个是 nil 的情况，这种情况下，只有两者都是 nil，函数才会返回 true。</p>
-<p>接着，使用反射，获取x，y 的反射对象，并且立即比较两者的类型，根据前面的内容，这里实际上是动态类型，如果类型不同，直接返回 false。</p>
-<p>最后，最核心的内容在子函数 <code>deepValueEqual</code> 中。</p>
-<p>代码��较长，思路却比较简单清晰：核心是一个 switch 语句，识别输入参数的不同类型，分别递归调用 deepValueEqual 函数，一直递归到最基本的数据类型，比较 int，string 等可以直接得出 true 或者 false，再一层层地返回，最终得到“深度”相等的比较结果。</p>
-<p>实际上，各种类型的比较套路比较相似，这里就直接节选一个稍微复杂一点的 <code>map</code> 类型的比较：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-comment">// deepValueEqual 函数</span>
-<span class="hljs-comment">// ……</span>
+    return deepValueEqual(v1, v2, make(map[visit]bool), 0)
+}
+```
 
-<span class="hljs-keyword">case</span> Map:
-    <span class="hljs-keyword">if</span> v1.IsNil() != v2.IsNil() {
-        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>
+首先查看两者是否有一个是 nil 的情况，这种情况下，只有两者都是 nil，函数才会返回 true。
+
+接着，使用反射，获取x，y 的反射对象，并且立即比较两者的类型，根据前面的内容，这里实际上是动态类型，如果类型不同，直接返回 false。
+
+最后，最核心的内容在子函数 `deepValueEqual` 中。
+
+代码��较长，思路却比较简单清晰：核心是一个 switch 语句，识别输入参数的不同类型，分别递归调用 deepValueEqual 函数，一直递归到最基本的数据类型，比较 int，string 等可以直接得出 true 或者 false，再一层层地返回，最终得到“深度”相等的比较结果。
+
+实际上，各种类型的比较套路比较相似，这里就直接节选一个稍微复杂一点的 `map` 类型的比较：
+
+```
+// deepValueEqual 函数
+// ……
+
+case Map:
+    if v1.IsNil() != v2.IsNil() {
+        return false
     }
-    <span class="hljs-keyword">if</span> v1.Len() != v2.Len() {
-        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>
+    if v1.Len() != v2.Len() {
+        return false
     }
-    <span class="hljs-keyword">if</span> v1.Pointer() == v2.Pointer() {
-        <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+    if v1.Pointer() == v2.Pointer() {
+        return true
     }
-    <span class="hljs-keyword">for</span> _, k := <span class="hljs-keyword">range</span> v1.MapKeys() {
+    for _, k := range v1.MapKeys() {
         val1 := v1.MapIndex(k)
         val2 := v2.MapIndex(k)
-        <span class="hljs-keyword">if</span> !val1.IsValid() || !val2.IsValid() || !deepValueEqual(v1.MapIndex(k), v2.MapIndex(k), visited, depth+<span class="hljs-number">1</span>) {
-            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>
+        if !val1.IsValid() || !val2.IsValid() || !deepValueEqual(v1.MapIndex(k), v2.MapIndex(k), visited, depth+1) {
+            return false
         }
     }
-    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+    return true
     
-<span class="hljs-comment">// ……   </span></code></pre>
-<p>和前文总结的表格里，比较 map 是否相等的思路比较一致，也不需要多说什么。说明一点，<code>visited</code> 是一个 map，记录递归过程中，比较过的“对”：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-keyword">type</span> visit <span class="hljs-keyword">struct</span> {
+// ……   
+```
+
+和前文总结的表格里，比较 map 是否相等的思路比较一致，也不需要多说什么。说明一点，`visited` 是一个 map，记录递归过程中，比较过的“对”：
+
+```
+type visit struct {
     a1  unsafe.Pointer
     a2  unsafe.Pointer
     typ Type
 }
 
-<span class="hljs-keyword">map</span>[visit]<span class="hljs-keyword">bool</span></code></pre>
-<p>比较过程中，一旦发现比较的“对”，已经在 map 里出现过的话，直接判定“深度”比较结果的是 <code>true</code>。</p>
-<h1 id="总结">总结</h1>
-<p>Go 作为一门静态语言，相比 Python 等动态语言，在编写过程中灵活性会受到一定的限制。但是通过接口加反射实现了类似于动态语言的能力：可以在程序运行时动态地捕获甚至改变类型的信息和值。</p>
-<p>Go 语言的反射实现的基础是类型，或者说是 interface，当我们使用反射特性时，实际上用到的就是存储在 interface 变量中的和类型相关的信息，也就是常说的 <code><type, value></code> 对。</p>
-<p>只有 interface 才有反射的说法。</p>
-<p>反射在 reflect 包中实现，涉及到两个相关函数：</p>
-<pre class="golang"><code class="hljs go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TypeOf</span> <span class="hljs-params">( i <span class="hljs-keyword">interface</span>{} )</span> <span class="hljs-title">Type</span>
-<span class="hljs-title">func</span> <span class="hljs-title">ValueOf</span> <span class="hljs-params">( i <span class="hljs-keyword">interface</span>{} )</span> <span class="hljs-title">Value</span></span></code></pre>
-<p>Type 是一个接口，定义了很多相关方法，用于获取类型信息。Value 则持有类型的具体值。Type、Value、Interface 三者间通过函数 TypeOf，ValueOf，Interface 进行相互转换。</p>
-<p>最后温习一下反射三大定律：</p>
-<blockquote>
-<ol>
-<li>Reflection goes from interface value to reflection object.</li>
-<li>Reflection goes from reflection object to interface value.</li>
-<li>To modify a reflection object, the value must be settable.</li>
-</ol>
-</blockquote>
-<p>翻译一下：</p>
-<blockquote>
-<ol>
-<li>反射将接口变量转换成反射对象 Type 和 Value；</li>
-<li>反射可以通过反射对象 Value 还原成原先的接口变量；</li>
-<li>反射可以用来修改一个变量的值，前提是这个值可以被修改。</li>
-</ol>
-</blockquote>
-<p><img src="https://user-images.githubusercontent.com/7698088/51420568-305b1800-1bce-11e9-962a-52b12be7eb2e.png" alt="QR"></p>
-<h1 id="参考资料">参考资料</h1>
-<p>【维基百科中文】<a href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%B0%84_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6)">https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%B0%84_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6)</a></p>
-<p>【码洞老钱 反射】<a href="https://juejin.im/post/5c2040d76fb9a049c643d9bd" class="uri">https://juejin.im/post/5c2040d76fb9a049c643d9bd</a></p>
-<p>【Go官方博客 reflection】<a href="https://blog.golang.org/laws-of-reflection" class="uri">https://blog.golang.org/laws-of-reflection</a></p>
-<p>【GCTT译文，不错】<a href="https://mp.weixin.qq.com/s/dkgJ_fA0smvpv69t5Nv-7A" class="uri">https://mp.weixin.qq.com/s/dkgJ_fA0smvpv69t5Nv-7A</a></p>
-<p>【json库 源码分析】<a href="https://zhuanlan.zhihu.com/p/37165706" class="uri">https://zhuanlan.zhihu.com/p/37165706</a></p>
-<p>【reflect 代码例子和图比较好】<a href="https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/" class="uri">https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/</a></p>
-<p>【反射使用讲得不错】<a href="https://juejin.im/post/5a75a4fb5188257a82110544" class="uri">https://juejin.im/post/5a75a4fb5188257a82110544</a></p>
-<p>【接口和反射的关系 ，english】<a href="https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/" class="uri">https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/</a></p>
-<p>【总结成知识点】<a href="http://www.cnblogs.com/susufufu/p/7653579.html" class="uri">http://www.cnblogs.com/susufufu/p/7653579.html</a></p>
-<p>【Type Value】<a href="https://colobu.com/2016/07/09/dive-into-go-13/" class="uri">https://colobu.com/2016/07/09/dive-into-go-13/</a></p>
-<p>【讲得比较清晰简单】<a href="https://www.lijiaocn.com/%E7%BC%96%E7%A8%8B/2017/11/06/golang-reflection.html">https://www.lijiaocn.com/%E7%BC%96%E7%A8%8B/2017/11/06/golang-reflection.html</a></p>
-<p>【DeepEqual】<a href="https://github.com/Chasiny/Blog/blob/master/blog/go/package/go-reflect-deepequal.md" class="uri">https://github.com/Chasiny/Blog/blob/master/blog/go/package/go-reflect-deepequal.md</a></p>
-<p>【反射使用场景】<a href="https://yq.aliyun.com/articles/599584" class="uri">https://yq.aliyun.com/articles/599584</a></p>
-						<hr>
-						<div>
-								<p class="text-center" style="color:red">有疑问加站长微信联系（非本文作者）</p>
-								<img alt="" src="https://static.golangjob.cn/static/img/footer.png?imageView2/2/w/280" class="img-responsive center-block">
-						
+map[visit]bool
+```
+
+比较过程中，一旦发现比较的“对”，已经在 map 里出现过的话，直接判定“深度”比较结果的是 `true`。
+
+# 总结
+
+Go 作为一门静态语言，相比 Python 等动态语言，在编写过程中灵活性会受到一定的限制。但是通过接口加反射实现了类似于动态语言的能力：可以在程序运行时动态地捕获甚至改变类型的信息和值。
+
+Go 语言的反射实现的基础是类型，或者说是 interface，当我们使用反射特性时，实际上用到的就是存储在 interface 变量中的和类型相关的信息，也就是常说的 对。
+
+只有 interface 才有反射的说法。
+
+反射在 reflect 包中实现，涉及到两个相关函数：
+
+```
+func TypeOf ( i interface{} ) Type
+func ValueOf ( i interface{} ) Value
+```
+
+Type 是一个接口，定义了很多相关方法，用于获取类型信息。Value 则持有类型的具体值。Type、Value、Interface 三者间通过函数 TypeOf，ValueOf，Interface 进行相互转换。
+
+最后温习一下反射三大定律：
+
+> 1.  Reflection goes from interface value to reflection object.
+> 2.  Reflection goes from reflection object to interface value.
+> 3.  To modify a reflection object, the value must be settable.
+
+翻译一下：
+
+> 1.  反射将接口变量转换成反射对象 Type 和 Value；
+> 2.  反射可以通过反射对象 Value 还原成原先的接口变量；
+> 3.  反射可以用来修改一个变量的值，前提是这个值可以被修改。
+
+![QR](https://user-images.githubusercontent.com/7698088/51420568-305b1800-1bce-11e9-962a-52b12be7eb2e.png)
+
+# 参考资料
+
+【维基百科中文】[https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%B0%84\_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6)](https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%B0%84_\(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6\))
+
+【码洞老钱 反射】[https://juejin.im/post/5c2040d76fb9a049c643d9bd](https://juejin.im/post/5c2040d76fb9a049c643d9bd)
+
+【Go官方博客 reflection】[https://blog.golang.org/laws-of-reflection](https://blog.golang.org/laws-of-reflection)
+
+【GCTT译文，不错】[https://mp.weixin.qq.com/s/dkgJ\_fA0smvpv69t5Nv-7A](https://mp.weixin.qq.com/s/dkgJ_fA0smvpv69t5Nv-7A)
+
+【json库 源码分析】[https://zhuanlan.zhihu.com/p/37165706](https://zhuanlan.zhihu.com/p/37165706)
+
+【reflect 代码例子和图比较好】[https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/](https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/)
+
+【反射使用讲得不错】[https://juejin.im/post/5a75a4fb5188257a82110544](https://juejin.im/post/5a75a4fb5188257a82110544)
+
+【接口和反射的关系 ，english】[https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/](https://blog.gopheracademy.com/advent-2018/interfaces-and-reflect/)
+
+【总结成知识点】[http://www.cnblogs.com/susufufu/p/7653579.html](http://www.cnblogs.com/susufufu/p/7653579.html)
+
+【Type Value】[https://colobu.com/2016/07/09/dive-into-go-13/](https://colobu.com/2016/07/09/dive-into-go-13/)
+
+【讲得比较清晰简单】[https://www.lijiaocn.com/%E7%BC%96%E7%A8%8B/2017/11/06/golang-reflection.html](https://www.lijiaocn.com/%E7%BC%96%E7%A8%8B/2017/11/06/golang-reflection.html)
+
+【DeepEqual】[https://github.com/Chasiny/Blog/blob/master/blog/go/package/go-reflect-deepequal.md](https://github.com/Chasiny/Blog/blob/master/blog/go/package/go-reflect-deepequal.md)
+
+【反射使用场景】[https://yq.aliyun.com/articles/599584](https://yq.aliyun.com/articles/599584)
+
+* * *
+
+有疑问加站长微信联系（非本文作者）
+
+![](https://static.golangjob.cn/static/img/footer.png?imageView2/2/w/280)
