@@ -1,0 +1,20 @@
+import{_ as t}from"./plugin-vue_export-helper-DlAUqK2U.js";import{c as n,a as e,o}from"./app-DIJDtupu.js";const b={};function i(p,r){return o(),n("div",null,r[0]||(r[0]=[e(`<p>复制</p><p>1<br> 2<br> 3<br> 4<br> 5<br> 6<br> 7<br> 8<br> 9<br> 10<br> 11<br> 12<br> 13<br> 14<br> 15<br> 16<br> 17<br> 18<br> 19<br> 20<br> 21<br> 22<br> 23<br> 24<br> 25<br> 26<br> 27<br> 28<br> 29<br> 30<br> 31<br> 32<br> 33<br> 34<br> 35<br> 36<br> 37<br> 38<br> 39<br> 40<br> 41<br> 42<br> 43<br> 44<br> 45<br> 46<br> 47<br> 48<br> 49<br> 50<br> 51<br> 52<br> 53<br> 54<br> 55</p><p>// goroutine泄露导致内存泄露<br> package main</p><p>import (<br> &quot;fmt&quot;<br> &quot;net/http&quot;<br> _ &quot;net/http/pprof&quot;<br> &quot;os&quot;<br> &quot;time&quot;<br> )</p><p>func main() {<br> // 开启pprof<br> go func() {<br> ip := &quot;0.0.0.0:6060&quot;<br> if err := http.ListenAndServe(ip, nil); err != nil {<br> fmt.Printf(&quot;start pprof failed on %s\\n&quot;, ip)<br> os.Exit(1)<br> }<br> }()</p><pre><code>outCh := make(chan int)  
+// 死代码，永不读取  
+go func() {  
+	if false {  
+		&lt;-outCh  
+	}  
+	select {}  
+}()  
+
+// 每s起100个goroutine，goroutine会阻塞，不释放内存  
+tick := time.Tick(time.Second / 100)  
+i := 0  
+for range tick {  
+	i++  
+	fmt.Println(i)  
+	alloc1(outCh)  
+}  
+</code></pre><p>}</p><p>func alloc1(outCh chan&lt;- int) {<br> go alloc2(outCh)<br> }</p><p>func alloc2(outCh chan&lt;- int) {<br> func() {<br> defer fmt.Println(&quot;alloc-fm exit&quot;)<br> // 分配内存，假用一下<br> buf := make([]byte, 1024*1024*10)<br> _ = len(buf)<br> fmt.Println(&quot;alloc done&quot;)</p><pre><code>	outCh &lt;- 0 // 53行  
+}()  
+</code></pre><p>}</p>`,11)]))}const l=t(b,[["render",i],["__file","实战Go内存泄露.html.vue"]]),u=JSON.parse('{"path":"/golang/%E5%8E%9F%E7%90%86/theory/%E5%AE%9E%E6%88%98Go%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2.html","title":"实战Go内存泄露","lang":"zh-CN","frontmatter":{"title":"实战Go内存泄露","source_url":"https://studygolang.com/articles/20529","category":"Go原理教程","description":"复制 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 // goroutine泄露导致内存...","head":[["meta",{"property":"og:url","content":"https://Cospk.github.io/vuepress-app/golang/%E5%8E%9F%E7%90%86/theory/%E5%AE%9E%E6%88%98Go%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2.html"}],["meta",{"property":"og:site_name","content":"Golang全栈指南"}],["meta",{"property":"og:title","content":"实战Go内存泄露"}],["meta",{"property":"og:description","content":"复制 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 // goroutine泄露导致内存..."}],["meta",{"property":"og:type","content":"article"}],["meta",{"property":"og:locale","content":"zh-CN"}],["meta",{"property":"og:updated_time","content":"2025-08-27T12:02:38.000Z"}],["meta",{"property":"article:modified_time","content":"2025-08-27T12:02:38.000Z"}],["script",{"type":"application/ld+json"},"{\\"@context\\":\\"https://schema.org\\",\\"@type\\":\\"Article\\",\\"headline\\":\\"实战Go内存泄露\\",\\"image\\":[\\"\\"],\\"dateModified\\":\\"2025-08-27T12:02:38.000Z\\",\\"author\\":[{\\"@type\\":\\"Person\\",\\"name\\":\\"Cospk\\",\\"url\\":\\"https://savvygo.cn\\"}]}"]]},"headers":[],"git":{"createdTime":1756202807000,"updatedTime":1756296158000,"contributors":[{"name":"shiwei","username":"shiwei","email":"xie@gmail.com","commits":2,"url":"https://github.com/shiwei"}]},"readingTime":{"minutes":0.72,"words":215},"filePathRelative":"golang/原理/theory/实战Go内存泄露.md","localizedDate":"2025年8月26日","autoDesc":true,"excerpt":"<p>复制</p>\\n<p>1<br>\\n2<br>\\n3<br>\\n4<br>\\n5<br>\\n6<br>\\n7<br>\\n8<br>\\n9<br>\\n10<br>\\n11<br>\\n12<br>\\n13<br>\\n14<br>\\n15<br>\\n16<br>\\n17<br>\\n18<br>\\n19<br>\\n20<br>\\n21<br>\\n22<br>\\n23<br>\\n24<br>\\n25<br>\\n26<br>\\n27<br>\\n28<br>\\n29<br>\\n30<br>\\n31<br>\\n32<br>\\n33<br>\\n34<br>\\n35<br>\\n36<br>\\n37<br>\\n38<br>\\n39<br>\\n40<br>\\n41<br>\\n42<br>\\n43<br>\\n44<br>\\n45<br>\\n46<br>\\n47<br>\\n48<br>\\n49<br>\\n50<br>\\n51<br>\\n52<br>\\n53<br>\\n54<br>\\n55</p>"}');export{l as comp,u as data};
